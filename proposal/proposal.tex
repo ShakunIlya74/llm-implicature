@@ -1,0 +1,76 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{bm}
+
+\title{\textbf{Project Proposal: Reverse-Engineering Pragmatic Inference in LMs \\ \large A Cross-Scale Bayesian Analysis of Knowledge and Implicature}}
+
+\author{\textbf{Jingyu Han, Illia Shakun, Yankı Öztürk, Lukas Viestädt} \\ 
+Course: Modeling Agents (WS2025/26) \\
+Instructor: Polina Tsvilodub}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Research Objective}
+This project investigates the computational mechanisms of pragmatic inference in Large Language Models (LLMs) by replicating and extending the experimental paradigm of \textbf{Goodman \& Stuhlmüller (2013)}. We aim to evaluate whether LLMs adjust their interpretation of scalar quantifiers (e.g., "some") based on the speaker's epistemic state $k$ (knowledge access), and whether this behavior is governed by the formal integration of Bayesian priors and likelihoods as defined in the Rational Speech Act (RSA) framework.
+
+\section{Formal Problem Definition}
+We define the communicative interaction as a Bayesian inference problem:
+\begin{itemize}
+    \item \textbf{State Space $S$}: The world state $s \in \{0, 1, \dots, N\}$, where $N=3$ items.
+    \item \textbf{Observation $k$}: The speaker's knowledge access $k \in \{1, \dots, N\}$.
+    \item \textbf{Utterance $U$}: The quantifier used, $u \in \{\text{'none', 'some', 'all'}\}$.
+    \item \textbf{Target}: The listener's pragmatic posterior $P_{L_1}(s | u, k)$.
+\end{itemize}
+
+\section{Experimental Design}
+
+\subsection{Task 1: Controlled Behavioral Evaluation}
+We will execute a structured behavioral test to measure the "pragmatic shift" in LLMs.
+\begin{itemize}
+    \item \textbf{Stimuli}: Text-based scenarios varying $k$ (observation) and $u$ (utterance). 
+    \item \textbf{Model Gradient}: We select SOTA models across three parameter tiers to evaluate scaling effects:
+    \begin{enumerate}
+        \item \textbf{Small (7B-9B)}: \texttt{Llama-3.1-8B}, \texttt{Gemma-2-9B}.
+        \item \textbf{Medium (27B-72B)}: \texttt{Gemma-2-27B}, \texttt{Qwen-2.5-72B}.
+        \item \textbf{Frontier}: \texttt{DeepSeek-V3}, \texttt{Llama-3.1-405B}, and \texttt{GPT-4o}.
+    \end{enumerate}
+    \item \textbf{Inference Strategy}: Open-weights models will be run via **local inference** (vLLM/HuggingFace) to ensure full access to log-probabilities. Official APIs will be used for proprietary models.
+\end{itemize}
+
+\subsection{Task 2: RSA Component Probing}
+To reverse-engineer the "mechanism," we decompose the LM's output into distinct Bayesian sub-tasks:
+\begin{enumerate}
+    \item \textbf{Prior Elicitation ($P(s)$)}: We will probe the model's unconditioned base-rate expectations for $s$ using neutral context prompts.
+    \item \textbf{Speaker Likelihood ($P_S$)}: We assess the speaker model using a rational choice soft-max:
+    \begin{equation}
+    P_S(u | s, k) = \frac{\exp(\alpha \cdot \text{Utility}(u; s, k))}{\sum_{u'} \exp(\alpha \cdot \text{Utility}(u'; s, k))}
+    \end{equation}
+    We will extract \textbf{next-token log-probabilities} for the Quantifier set to fit the optimality parameter $\alpha$ via Maximum Likelihood Estimation (MLE).
+\end{enumerate}
+
+\section{Hypothesized Scaling Outcomes}
+We anticipate three stylized patterns regarding model scale:
+\begin{itemize}
+    \item \textbf{O1 (Emergent Rationality)}: Increased scale correlates with higher behavioral similarity to humans and stronger mathematical consistency between $P_S, P(s)$, and $P_{L_1}$.
+    \item \textbf{O2 (Heuristic Scaling)}: Larger models exhibit human-like behavior ($P_{L_1}$) but fail the internal Bayesian consistency test, indicating reliance on high-dimensional surface patterns.
+    \item \textbf{O3 (Inference Bottleneck)}: Models accurately represent priors and speaker logic but fail to integrate them normatively, regardless of parameter count.
+\end{itemize}
+
+\section{Technical Implementation}
+We will implement a **unified evaluation pipeline** to standardize prompt templates across local and API-based models. 
+\begin{itemize}
+    \item \textbf{Metrics}: KL-divergence ($\mathbb{D}_{KL}$) between human behavioral curves (from G\&S 2013) and model posteriors.
+    \item \textbf{Reliability}: We will use temperature-controlled sampling and evaluate sensitivity via prompt paraphrasing to ensure the results are robust across linguistic variations.
+\end{itemize}
+
+\end{document}
