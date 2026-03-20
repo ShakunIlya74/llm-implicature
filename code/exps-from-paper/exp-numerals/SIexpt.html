@@ -2,15 +2,39 @@
 <!-- adapted from url=(0072)http://www.stanford.edu/~justinek/sentenceRating_exp/sentenceRating.html -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
   <title>SI</title>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
-<script src="http://stanford.edu/~louyang/mmturkey.0.5.js"></script>
-<!--<link rel="stylesheet" href="./SIexpt_files/style.css">-->
-<link rel="stylesheet" href="style.css">
+<script src="../jquery.min.js"></script>
+<script>
+// Stub for mmturkey (Mechanical Turk integration) — not needed locally
+var turk = {
+    previewMode: false,
+    submit: function(data) {
+        console.log("=== EXPERIMENT DATA ===");
+        console.log(JSON.stringify(data, null, 2));
+        document.getElementById('finished').innerHTML =
+            "<h2>Experiment complete!</h2><p>Data logged to browser console (F12).</p>" +
+            "<pre style='text-align:left;max-height:400px;overflow:auto;font-size:11px'>" +
+            JSON.stringify(data, null, 2) + "</pre>";
+    }
+};
+</script>
+<style>
+body { font-family: Arial, sans-serif; margin: 40px auto; max-width: 800px; line-height: 1.5; }
+.slide { display: none; }
+.block-text { text-align: justify; }
+.story { background: #f5f5f5; padding: 10px; border-left: 3px solid #888; }
+.question { font-weight: bold; }
+.bet input { width: 50px; margin: 2px 4px; }
+.progress { margin-bottom: 15px; }
+.bar-wrapper { background: #eee; height: 14px; border-radius: 7px; }
+.bar { background: #4caf50; height: 14px; border-radius: 7px; transition: width 0.3s; }
+button { padding: 8px 20px; margin: 10px 0; cursor: pointer; }
+hr { border: none; border-top: 1px solid #ccc; }
+</style>
 </head>
 <body>
 <div class="slide" id="instructions" style="display: none; ">
   <!--<img src="./SIexpt_files/lablogo.png" alt="Stanford Computation and Cognition Lab"><br><br>-->
-  <img src="lablogo.png" alt="Stanford Computation and Cognition Lab"><br><br>
+  <b>Stanford Computation and Cognition Lab</b><br><br>
   <p class="block-text">In this HIT, you will read simple stories and answer questions about them.
   There will be a warm-up and then six stories. The entire HIT should take you about ten minutes</p>
   <p class="block-text" id="legal">Legal information: By answering the
@@ -190,7 +214,7 @@ function checkPreview() {
 </div>
 
 <div class="slide" id="finished" style="display: none; ">
-  You're finished - thanks for participating! Submitting to Mechanical Turk...
+  You're finished - thanks for participating!
 </div>
 <script language="JavaScript">
 $(".betinstructions").html("<br>(Please answer by betting on the options -- your bets should correspond to your confidence that each option is correct.)")
