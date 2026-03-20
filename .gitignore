@@ -231,3 +231,6 @@ __marimo__/
 *.glo
 *.gls
 *.ist
+
+# data folder/ files
+/data
