@@ -287,7 +287,7 @@ def run_experiment(
                     "output": result["output"],
                 }
                 if "log_probs" in result:
-                    record["log_probs"] = json.dumps(result["log_probs"])
+                    record["log_probs"] = result["log_probs"]
                 if "attempts" in result:
                     record["attempts"] = result["attempts"]
                     record["valid"] = result.get("valid", True)
