@@ -216,6 +216,7 @@ __marimo__/
 *.fls
 *.fdb_latexmk
 *.synctex.gz
+*.synctex
 *.bbl
 *.blg
 *.nav
