@@ -216,6 +216,7 @@ __marimo__/
 *.fls
 *.fdb_latexmk
 *.synctex.gz
+*.synctex
 *.bbl
 *.blg
 *.nav
@@ -231,3 +232,6 @@ __marimo__/
 *.glo
 *.gls
 *.ist
+
+# data folder/ files
+/data
