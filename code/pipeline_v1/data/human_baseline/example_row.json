@@ -1,0 +1,12 @@
+{
+  "source": "example_only_not_real_data",
+  "experiment_block": "quantifier",
+  "story_shortname": "seeds",
+  "k": 2,
+  "utterance_type": "quantifier",
+  "utterance": "some",
+  "question_key": "posterior",
+  "state": 3,
+  "p_human": 0.12,
+  "notes": "Replace with digitized G&S 2013 values; one row per state or store as array in your pipeline."
+}

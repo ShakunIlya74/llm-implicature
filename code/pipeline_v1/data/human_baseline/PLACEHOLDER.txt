@@ -1,0 +1,12 @@
+Phase A — human baseline (no participant recruitment required for default path)
+
+Option A (default for course work): Use published Goodman & Stuhlmüller (2013) figures/tables.
+  - Digitize mean bets or curves (e.g. WebPlotDigitizer) into JSONL rows that validate against
+    baseline_points.schema.json (one object per line, or use a CSV you convert).
+
+Option B: Request raw data from authors if still available.
+
+Option C: Run a small new study (Prolific/MTurk/lab) only if you need novel conditions or trial-level data.
+
+Next step: Create human_baseline.jsonl in this folder once digits are extracted, and record
+the source string in each row's "source" field.

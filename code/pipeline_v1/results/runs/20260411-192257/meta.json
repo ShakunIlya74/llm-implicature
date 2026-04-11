@@ -1,0 +1,7 @@
+{
+  "run_dir": "code\\pipeline_v1\\results\\runs\\20260411-192257",
+  "num_models": 7,
+  "num_examples_per_model": 2430,
+  "dry_run": true,
+  "timestamp": "2026-04-11T19:22:58.194502"
+}

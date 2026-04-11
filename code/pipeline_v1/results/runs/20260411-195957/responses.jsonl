@@ -1,0 +1,1 @@
+{"model_id": "qwen/qwen-2.5-7b-instruct", "scenario_id": "st-000001", "k": 2, "utterance": "some", "prompt_strategy": "baseline", "question_key": "posterior", "result": {"mode": "dry_run", "text": "{\"0\": 10, \"1\": 20, \"2\": 30, \"3\": 40}", "logprobs": null, "note": "DRY_RUN response for st-000001"}}

@@ -1,0 +1,52 @@
+# Phase A prompt contract — wording aligned with llm_utils.prompts (BETTING_PREAMBLE / BETTING_REMINDER).
+# Same structure as phase_a_prompt_contract.yaml; use this variant when you want human-protocol parity.
+# Runner: load either this file or phase_a_prompt_contract.yaml, not both.
+
+prompt_version: phase_a_v1_gs2013_wording
+
+betting_instructions: |
+  In the questions that follow you will be asked to answer questions by "betting" on the possible answers. You should imagine that you have $100 and divide your money between the answers -- the amount of money you bet on each option should correspond to how confident you are that it is correct. Your bets over all the options must sum to 100
+
+betting_reminder: |
+  (Please answer by betting on the options -- your bets should correspond to your confidence that each option is correct.)
+
+substitution_fields:
+  - context_prefix
+  - setup
+  - utterance_text
+  - question_text
+
+question_key_to_story_field:
+  prior: prior_q
+  posterior: posterior_q
+  knowledge: knowledge_q
+
+utterance_block_rules:
+  prior: omit_utterance_text
+  posterior: include_utterance_after_setup
+  knowledge: include_utterance_after_setup
+
+strategies:
+  baseline:
+    system: |
+      You are participating in a probability judgment study. Answer the questions based on the given scenario.
+    user_suffix: ""
+  cot:
+    system: |
+      You are participating in a probability judgment study. Answer the questions based on the given scenario.
+    user_suffix: |
+      Think step by step briefly, then give your final answer clearly at the end.
+  structured_output:
+    system: |
+      You are participating in a probability judgment study. Respond ONLY with a valid JSON object, no other text.
+    count_question_json_instruction: |
+      Distribute exactly $100 across the possible outcomes (0, 1, 2, or 3). Your bets must sum to exactly 100.
+      Respond with a JSON object: {"0": <int>, "1": <int>, "2": <int>, "3": <int>}
+    knowledge_question_json_instruction: |
+      Distribute exactly $100 between yes and no. Your bets must sum to exactly 100.
+      Respond with a JSON object: {"yes": <int>, "no": <int>}
+
+rsa_measurement_v1:
+  status: TBD_before_task2
+  quantifier_surface_forms: ["none", "some", "all"]
+  note: "Define Utility(u;s,k) and exact continuation string for next-token logprobs in proposal appendix."

@@ -1,0 +1,9 @@
+# Single small model for live API smoke tests (lower cost/latency).
+models:
+  - id: qwen/qwen-2.5-7b-instruct
+    provider: openrouter
+    scale_tier: small
+    reasoning_mode: non_reasoning
+
+defaults:
+  provider: openrouter

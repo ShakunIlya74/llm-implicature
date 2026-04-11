@@ -1,0 +1,36 @@
+# Minimal Phase A smoke: one story, one utterance, one strategy, one paraphrase, posterior only.
+# For pipeline dry-runs and sanity checks before full generation.
+
+experiment_name: rsa_implicature_phase_a_smoke
+prompt_version: phase_a_v1
+seed: 42
+
+prompt_contract_path: code/pipeline_v1/prompts/phase_a_prompt_contract_gs2013_wording.yaml
+
+phase_a:
+  note: "Not the full study; use experiment.phase_a.yaml for full factorial."
+
+design:
+  total_items: 3
+  story_indices: [1]
+  knowledge_levels: [2]
+  utterances: ["some"]
+  prompt_strategies: ["baseline"]
+  paraphrases_per_condition: 1
+  samples_per_prompt: 3
+  question_types: [posterior]
+
+generation:
+  include_number_words: false
+  number_words: ["one", "two", "three"]
+  output_path: code/pipeline_v1/data/processed/stimuli.phase_a_smoke.jsonl
+
+run:
+  dry_run: true
+  max_examples: 10
+  concurrency: 15
+  temperature: 0.2
+  max_tokens: 256
+
+output:
+  run_root: code/pipeline_v1/results/runs

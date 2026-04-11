@@ -1,0 +1,38 @@
+# Full Phase A quantifier grid, live inference, single model (see models_live_single.yaml).
+# 2430 stimuli × 1 model = 2430 API calls. Ensure budget and rate limits.
+
+experiment_name: rsa_implicature_phase_a_live_single
+prompt_version: phase_a_v1
+seed: 42
+
+prompt_contract_path: code/pipeline_v1/prompts/phase_a_prompt_contract_gs2013_wording.yaml
+
+phase_a:
+  frozen_for: "Live run single-model; compare to multi-model list separately."
+  human_baseline_plan: "Digitize published G&S 2013 curves/means; see data/human_baseline/PLACEHOLDER.txt"
+  logprob_token_note: "Align none/some/all to provider tokenization before fitting alpha; document in rsa_measurement."
+
+design:
+  total_items: 3
+  story_indices: null
+  knowledge_levels: [1, 2, 3]
+  utterances: ["none", "some", "all"]
+  prompt_strategies: ["baseline", "cot", "structured_output"]
+  paraphrases_per_condition: 5
+  samples_per_prompt: 20
+  question_types: [prior, posterior, knowledge]
+
+generation:
+  include_number_words: false
+  number_words: ["one", "two", "three"]
+  output_path: code/pipeline_v1/data/processed/stimuli.phase_a.jsonl
+
+run:
+  dry_run: false
+  max_examples: 2430
+  concurrency: 15
+  temperature: 0.2
+  max_tokens: 256
+
+output:
+  run_root: code/pipeline_v1/results/runs

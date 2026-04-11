@@ -1,0 +1,194 @@
+{
+  "run_dir": "code\\pipeline_v1\\results\\runs\\20260411-202357",
+  "num_models": 1,
+  "num_examples_per_model": 2430,
+  "num_tasks": 2430,
+  "concurrency": 15,
+  "dynamic_concurrency": true,
+  "dry_run": false,
+  "prompt_contract_path": "code\\pipeline_v1\\prompts\\phase_a_prompt_contract_gs2013_wording.yaml",
+  "prompt_version": "phase_a_v1_gs2013_wording",
+  "timestamp": "2026-04-11T20:28:42.539122",
+  "dynamic_concurrency_stats": {
+    "final_limit": 64,
+    "event_count": 25,
+    "events_tail": [
+      {
+        "t": 1775910251.5640094,
+        "kind": "ramp_up",
+        "limit": 17,
+        "old_limit": 15,
+        "new_limit": 17
+      },
+      {
+        "t": 1775910260.7191389,
+        "kind": "ramp_up",
+        "limit": 19,
+        "old_limit": 17,
+        "new_limit": 19
+      },
+      {
+        "t": 1775910267.3507433,
+        "kind": "ramp_up",
+        "limit": 21,
+        "old_limit": 19,
+        "new_limit": 21
+      },
+      {
+        "t": 1775910274.7918682,
+        "kind": "ramp_up",
+        "limit": 23,
+        "old_limit": 21,
+        "new_limit": 23
+      },
+      {
+        "t": 1775910281.8858588,
+        "kind": "ramp_up",
+        "limit": 25,
+        "old_limit": 23,
+        "new_limit": 25
+      },
+      {
+        "t": 1775910286.6758292,
+        "kind": "ramp_up",
+        "limit": 27,
+        "old_limit": 25,
+        "new_limit": 27
+      },
+      {
+        "t": 1775910293.6752737,
+        "kind": "ramp_up",
+        "limit": 29,
+        "old_limit": 27,
+        "new_limit": 29
+      },
+      {
+        "t": 1775910297.7055218,
+        "kind": "ramp_up",
+        "limit": 31,
+        "old_limit": 29,
+        "new_limit": 31
+      },
+      {
+        "t": 1775910302.106975,
+        "kind": "ramp_up",
+        "limit": 33,
+        "old_limit": 31,
+        "new_limit": 33
+      },
+      {
+        "t": 1775910306.4127202,
+        "kind": "ramp_up",
+        "limit": 35,
+        "old_limit": 33,
+        "new_limit": 35
+      },
+      {
+        "t": 1775910310.734522,
+        "kind": "ramp_up",
+        "limit": 37,
+        "old_limit": 35,
+        "new_limit": 37
+      },
+      {
+        "t": 1775910314.225301,
+        "kind": "ramp_up",
+        "limit": 39,
+        "old_limit": 37,
+        "new_limit": 39
+      },
+      {
+        "t": 1775910318.1443877,
+        "kind": "ramp_up",
+        "limit": 41,
+        "old_limit": 39,
+        "new_limit": 41
+      },
+      {
+        "t": 1775910322.405162,
+        "kind": "ramp_up",
+        "limit": 43,
+        "old_limit": 41,
+        "new_limit": 43
+      },
+      {
+        "t": 1775910325.564218,
+        "kind": "ramp_up",
+        "limit": 45,
+        "old_limit": 43,
+        "new_limit": 45
+      },
+      {
+        "t": 1775910329.172979,
+        "kind": "ramp_up",
+        "limit": 47,
+        "old_limit": 45,
+        "new_limit": 47
+      },
+      {
+        "t": 1775910332.791392,
+        "kind": "ramp_up",
+        "limit": 49,
+        "old_limit": 47,
+        "new_limit": 49
+      },
+      {
+        "t": 1775910335.1266804,
+        "kind": "ramp_up",
+        "limit": 51,
+        "old_limit": 49,
+        "new_limit": 51
+      },
+      {
+        "t": 1775910338.0841548,
+        "kind": "ramp_up",
+        "limit": 53,
+        "old_limit": 51,
+        "new_limit": 53
+      },
+      {
+        "t": 1775910340.2660563,
+        "kind": "ramp_up",
+        "limit": 55,
+        "old_limit": 53,
+        "new_limit": 55
+      },
+      {
+        "t": 1775910343.6786125,
+        "kind": "ramp_up",
+        "limit": 57,
+        "old_limit": 55,
+        "new_limit": 57
+      },
+      {
+        "t": 1775910346.4469938,
+        "kind": "ramp_up",
+        "limit": 59,
+        "old_limit": 57,
+        "new_limit": 59
+      },
+      {
+        "t": 1775910348.4187622,
+        "kind": "ramp_up",
+        "limit": 61,
+        "old_limit": 59,
+        "new_limit": 61
+      },
+      {
+        "t": 1775910351.5224237,
+        "kind": "ramp_up",
+        "limit": 63,
+        "old_limit": 61,
+        "new_limit": 63
+      },
+      {
+        "t": 1775910354.405671,
+        "kind": "ramp_up",
+        "limit": 64,
+        "old_limit": 63,
+        "new_limit": 64
+      }
+    ]
+  },
+  "final_adaptive_limit": 64
+}

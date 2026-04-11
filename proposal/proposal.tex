@@ -1,0 +1,99 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{bm}
+
+\title{\textbf{Project Proposal: Reverse-Engineering Scalar Implicatures in LMs \\ \large A Cross-Scale Bayesian Analysis of Knowledge and Implicature}}
+
+\author{\textbf{Jingyu Han, Illia Shakun, Yankı Öztürk, Lukas Viestädt} \\ 
+Course: Modeling Agents (WS2025/26) \\
+Instructor: Polina Tsvilodub}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Research Objective}
+This project investigates the computational mechanisms of pragmatic inference in Large Language Models (LLMs) 
+by replicating and extending the experimental paradigm 
+of \textbf{Goodman \& Stuhlmüller (2013)}. We aim to evaluate whether LMs 
+adjust their interpretation of scalar quantifiers (e.g., "some") and the
+number words (e.g., "one", "two")  
+based on the speaker's epistemic state $k$ (knowledge access), 
+and whether this behavior is governed by the formal integration 
+of Bayesian priors and likelihoods as defined in the Rational Speech 
+Act (RSA) framework.
+
+\section{Formal Problem Definition}
+We define the communicative interaction as a Bayesian inference problem:
+\begin{itemize}
+    \item \textbf{State Space $S$}: The world state $s \in \{0, 1, \dots, N\}$, where $N=3$ items.
+    \item \textbf{Observation $k$}: The speaker's knowledge access $k \in \{1, \dots, N\}$.
+    \item \textbf{Utterance $U$}: The quantifier used, $u \in \{\text{'none', 'some', 'all'}\}$.
+    \item \textbf{Target}: The listener's pragmatic posterior $P_{L_1}(s | u, k)$.
+\end{itemize}
+
+\section{Experimental Design}
+
+\subsection{Task 1: Controlled Behavioral Evaluation}
+We will execute a structured behavioral test to measure the "pragmatic shift" in LMs.
+\begin{itemize}
+    \item \textbf{Stimuli}: Text-based scenarios promting with varying $k$ (observation), $u$ (utterance) and system prompt strategies (None, CoT, structured output). 
+    \item \textbf{Models}: We select SOTA models across four parameter tiers to evaluate scaling effects:\\
+    \textbf{Very small (4B and below)}, \textbf{Small (7B-9B)}, \textbf{Medium (27B-72B)}, and \textbf{Frontier}.
+    We avaluate both opensource models (Qwen, LLaMa, Phi, Gemma families) and proprietary models (GPT, Gemini providers) in both reasoning and non-reasoning settings when available.
+    \item \textbf{Inference Strategy}: Open-weight models bellow 9B as well as quantized versions of the medium tier will be run via local inference (vLLM/HuggingFace). Official APIs will be used for bigger or proprietary models.
+    \item \textbf{Prompting Strategies}: We will compare the influence of the popular prompting strategies on the pragmatic shift:
+    \begin{itemize}
+        \item \textbf{Baseline}: Direct question without additional context with and without 100\$ bets distribution experiment setup.
+        \item \textbf{Chain-of-Thought (CoT)}: Prompting the model to reason step-by-step before answering.
+        \item \textbf{Structured output promting}: We will also experiment with structured output prompts that explicitly ask the model to output the 100\$ bet distribution over the possible states, which may help 
+        to distil the internal representations of the model from the natural language flow bias.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Task 2: RSA Component Probing}
+To reverse-engineer the "mechanism," we decompose the LM's output into distinct Bayesian sub-tasks:
+\begin{enumerate}
+    \item \textbf{Prior Elicitation ($P(s)$)}: We will probe the model's unconditioned base-rate expectations for $s$ using neutral context prompts.
+    \item \textbf{Speaker Likelihood ($P_S$)}: We assess the speaker model using a rational choice soft-max:
+    \begin{equation}
+    P_S(u | s, k) = \frac{\exp(\alpha \cdot \text{Utility}(u; s, k))}{\sum_{u'} \exp(\alpha \cdot \text{Utility}(u'; s, k))}
+    \end{equation}
+    We will extract \textbf{next-token log-probabilities} for the Quantifier set to fit the optimality parameter $\alpha$ via Maximum Likelihood Estimation (MLE).
+\end{enumerate}
+
+\section{Testing Hypotheses}
+We anticipate two hypothesis regarding model scale and prompting setup:
+\begin{itemize}
+    \item \textbf{O1 (Emergent Rationality)}: Increased scale correlates with higher behavioral similarity to humans and stronger mathematical consistency between $P_S, P(s)$, and $P_{L_1}$.
+    \item \textbf{O2 (Prompt Independence)}: Larger models exhibit human-like behavior ($P_{L_1}$) independent of prompting strategy, while smaller models show more variability across strategies.
+\end{itemize}
+
+\section{Technical Implementation}
+We will implement a unified evaluation pipeline to standardize prompt templates across local and API-based models. 
+\begin{itemize}
+    \item \textbf{Metrics}: KL-divergence ($\mathbb{D}_{KL}$) between human behavioral curves (from G\&S 2013) and model posteriors.
+    \item \textbf{Reliability}: We will use temperature-controlled sampling and evaluate sensitivity via prompt paraphrasing to ensure the results are robust across linguistic variations.
+\end{itemize}
+
+\section{Scope Update (minimal runnable path)}
+Because direct human data collection is out of scope for this course timeline, we use a phased plan:
+\begin{itemize}
+    \item \textbf{Phase A (immediately runnable)}: run the full LM experiment grid (prior/posterior/knowledge questions; $k \in \{1,2,3\}$; quantifiers and optional number words), parse model outputs into probability distributions, and report qualitative implicature-shift metrics.
+    \item \textbf{Phase B (human alignment)}: compare LM distributions against digitized published aggregates from Goodman \& Stuhlmüller (2013), using schema-validated JSONL rows.
+    \item \textbf{Optional Phase C}: collect new human data only if needed for novel conditions beyond the published paradigm.
+\end{itemize}
+This update preserves the original research question while ensuring reproducible progress before human-baseline extraction is finished.
+
+\paragraph{Implementation note (as of draft sync).}
+The repository generates G\&S-style \emph{stimuli} (stories, utterances, fields in JSONL). The batch runner \texttt{pipeline\_v1/run\_all.py} loads \texttt{phase\_a\_prompt\_contract\_gs2013\_wording.yaml} and builds full betting + story messages via \texttt{prompts/gs2013\_message\_builder.py}. Re-run factorial grids after this wiring for interpretable behavioral results; older runs with placeholder prompts should be discarded for analysis. See \texttt{paper/main.tex} and \texttt{paper/project\_handoff.tex}.
+
+\end{document}
