@@ -235,3 +235,6 @@ __marimo__/
 
 # data folder/ files
 /data
+
+# Pipeline run outputs (large JSONL; regenerate locally)
+code/pipeline_v1/results/
