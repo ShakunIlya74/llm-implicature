@@ -43,18 +43,18 @@ LOCAL_MODELS = [
     # Gemmas
     "google/gemma-3-1b-it",
     "google/gemma-3-4b-it",
-    # new gemma 
-    "google/gemma-4-E2B-it" # 2.3B effective (5.1B with embeddings)
+    # new gemma: the vllm installation fails yet
+    # "google/gemma-4-E2B-it" # 2.3B effective (5.1B with embeddings)
 
 ]
 
 API_MODELS = [
     # TODO: update to the best (or keep the cheapest haha) api models
-    {
-        "model": "gpt-5.4-nano",
-        "base_url": "https://api.openai.com/v1",
-        "api_key_env": "OPENAI_API_KEY",
-    },
+    # {
+    #     "model": "gpt-5.4-nano",
+    #     "base_url": "https://api.openai.com/v1",
+    #     "api_key_env": "OPENAI_API_KEY",
+    # },
     # {
     #     "model": "gpt-5.4-mini",
     #     "base_url": "https://api.openai.com/v1",
@@ -65,6 +65,11 @@ API_MODELS = [
         "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
         "api_key_env": "GEMINI_API_KEY",
     },
+    # {
+    #     "model": "gemini-3.1-pro-preview",
+    #     "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+    #     "api_key_env": "GEMINI_API_KEY",
+    # },
 ]
 
 # Methods available for each model type
@@ -290,6 +295,6 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         # temp testing arguments when run without args from editor
         # main(["--mode", "local", "--models", "Qwen/Qwen3.5-0.8B"])
-        main(["--mode", "local", "--versions", "prompting-v2"])
+        main(["--mode", "api", "--versions", "prompting-v2"])
     else:
         main()
