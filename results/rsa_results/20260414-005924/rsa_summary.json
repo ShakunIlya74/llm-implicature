@@ -1,0 +1,10 @@
+{
+  "data_root": "D:\\llm-im\\llm-implicature-main\\data\\llm-inference",
+  "output_dir": "results\\rsa_results\\20260414-005924",
+  "num_unified_rows": 5407,
+  "num_bets_rows_valid": 1914,
+  "num_logprob_rows_valid": 2926,
+  "num_alpha_fits": 108,
+  "num_predictions": 108,
+  "num_comparisons": 108
+}

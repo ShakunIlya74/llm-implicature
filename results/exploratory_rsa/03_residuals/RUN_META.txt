@@ -1,0 +1,6 @@
+input: D:\llm-im\llm-implicature-main\results\rsa_results\20260414-005924\rsa_predictions.jsonl
+res_s = p_observed_posterior_bets(s) - p_rsa_predicted_posterior(s)
+l2_residual = sqrt(sum_s res_s^2) over s in {0,1,2,3}
+mean_residual_by_*: unweighted mean of res_s across posterior cells
+  (each cell = one aggregated condition; not weighted by raw trial n).
+Figure: summary_plot.png (mean residual heatmap, model × state).

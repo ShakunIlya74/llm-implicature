@@ -7,8 +7,14 @@ Qwen--Qwen3.5-4B,Qwen,exps_numerical,4.0,0.6021,6,2.798814,0.167193,1.238485,0.3
 Qwen--Qwen3.5-4B,Qwen,exps_some,4.0,0.6021,3,0.310699,0.157079,1.520546,0.356945,2.221607,0.400696,5.8,3
 Qwen--Qwen3.5-9B,Qwen,exps_numerical,9.0,0.9542,6,0.548822,0.121431,0.437207,0.167151,0.501448,0.182708,0.7667,6
 Qwen--Qwen3.5-9B,Qwen,exps_some,9.0,0.9542,3,0.201037,0.118401,0.430491,0.160656,0.594879,0.226169,5.3,3
+gemini-3.1-flash-lite-preview,gemini-3.1-flash-lite-preview,exps_numerical,,,6,0.216576,0.095676,nan,nan,nan,nan,0.5833,6
+gemini-3.1-flash-lite-preview,gemini-3.1-flash-lite-preview,exps_some,,,3,0.172446,0.114711,nan,nan,nan,nan,3.1333,3
 google--gemma-3-4b-it,google,exps_numerical,4.0,0.6021,6,0.475536,0.168417,1.60463,0.242054,0.640046,0.141224,0.1,6
 google--gemma-3-4b-it,google,exps_some,4.0,0.6021,3,0.165545,0.08434,0.720584,0.193611,0.72104,0.192868,0.1,3
+gpt-5.4-mini,gpt-5.4-mini,exps_numerical,,,6,0.266519,0.115079,nan,nan,nan,nan,0.3333,6
+gpt-5.4-mini,gpt-5.4-mini,exps_some,,,3,0.264506,0.144228,nan,nan,nan,nan,0.1,3
+gpt-5.4-nano,gpt-5.4-nano,exps_numerical,,,6,0.263005,0.12969,nan,nan,nan,nan,0.35,6
+gpt-5.4-nano,gpt-5.4-nano,exps_some,,,3,0.133831,0.108321,nan,nan,nan,nan,2.7333,3
 meta-llama--Llama-3.1-8B-Instruct,meta-llama,exps_numerical,8.0,0.9031,6,2.935352,0.056944,1.107461,0.292211,1.401061,0.349156,0.1,6
 meta-llama--Llama-3.1-8B-Instruct,meta-llama,exps_some,8.0,0.9031,3,0.671916,0.013889,1.046224,0.320962,1.166966,0.334851,0.1,3
 meta-llama--Llama-3.2-1B-Instruct,meta-llama,exps_numerical,1.0,0.0,6,0.380313,0.144373,0.070791,0.084412,0.315049,0.153929,0.1,6

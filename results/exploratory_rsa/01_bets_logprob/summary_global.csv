@@ -1,0 +1,2 @@
+input_file,n_rows_total,n_rows_without_logprob_excluded,n_cells_analyzed,mean_kl_bets_vs_logprob,sd_kl_bets_vs_logprob,mean_mae_bets_vs_logprob,sd_mae_bets_vs_logprob
+results\rsa_results\20260414-005924\rsa_vs_behavior.jsonl,108,27,81,0.80237097,0.63057811,0.22372209,0.10416098

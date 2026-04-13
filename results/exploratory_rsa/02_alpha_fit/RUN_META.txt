@@ -1,0 +1,7 @@
+input: D:\llm-im\llm-implicature-main\results\rsa_results\20260414-005924\rsa_alpha_fits.jsonl
+alpha_min=0.1 alpha_max=8.0 alpha_step=0.1
+boundary_tol = step/2 + 1e-9 = 0.050000001
+at_min: |alpha_hat - alpha_min| <= tol; at_max analogous.
+Boundary rates use denominator n_ok only (fit_status==ok).
+objective_value is KL(observed_bets || RSA_pred) at optimal alpha on grid.
+Figure: summary_plot.png (boundaries + mean objective).

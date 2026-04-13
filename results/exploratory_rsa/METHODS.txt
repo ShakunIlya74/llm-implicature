@@ -1,0 +1,31 @@
+Exploratory RSA analyses (post-hoc, existing rsa_probe outputs only)
+
+Prerequisites:
+  - rsa_vs_behavior.jsonl, rsa_alpha_fits.jsonl, rsa_predictions.jsonl
+    from the same rsa_probe run directory.
+
+01_bets_logprob (Analysis 1):
+  Script: code/pipeline_v1/exploratory/analyze_bets_logprob_agreement.py
+  Uses KL/MAE fields precomputed in rsa_vs_behavior.jsonl (same definitions as rsa_probe).
+  Only rows with has_logprob_distribution=true enter KL/MAE summaries;
+  n_rows_without_logprob_excluded is reported in summary_global.csv.
+  Cell = (model_id, experiment, access, utterance); summaries unweighted across cells.
+
+02_alpha_fit (Analysis 2):
+  Script: code/pipeline_v1/exploratory/analyze_alpha_rsa_fit.py
+  Boundary: |alpha_hat - alpha_min| <= step/2+eps or same for alpha_max;
+  must pass the same --alpha-min/--alpha-max/--alpha-step as rsa_probe for correct flags.
+  Boundary rates use denominator = count of fit_status==ok rows.
+
+03_residuals (Analysis 4):
+  Script: code/pipeline_v1/exploratory/analyze_bets_rsa_residuals.py
+  res_s = p_bets(s) - p_rsa(s); L2 = sqrt(sum_s res_s^2).
+  Means over cells are unweighted (each cell one aggregated posterior).
+
+Figures (matplotlib, same out-dir as CSVs):
+  01_bets_logprob/summary_plot.png
+  02_alpha_fit/summary_plot.png
+  03_residuals/summary_plot.png
+  Use --no-plots on run_all or individual scripts to skip.
+
+Default run dir for this batch: D:\llm-im\llm-implicature-main\results\rsa_results\20260414-005924

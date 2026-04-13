@@ -1,0 +1,8 @@
+input: D:\llm-im\llm-implicature-main\results\rsa_results\20260414-005924\rsa_vs_behavior.jsonl
+rows_total: 108
+rows_with_logprob: 81
+rows_excluded_no_logprob: 27
+KL_bets_vs_logprob is KL(p_bets || p_logprob) as in rsa_probe.
+Each row is one aggregated (model, experiment, access, utterance) cell.
+Summaries are unweighted over cells.
+Figure: summary_plot.png (mean KL and MAE by model × experiment).
