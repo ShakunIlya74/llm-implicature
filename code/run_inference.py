@@ -104,18 +104,18 @@ def run_local_models(
     models: list[str] | None = None,
     methods: list[str] | None = None,
     experiments: list[str] | None = None,
-    version: str = "prompting-v1",
+    versions: list[str] | None = None,
     port: int = 8000,
     api_key: str = "token-abc123",
     vllm_extra_args: list[str] | None = None,
 ) -> None:
     """Run experiments on local models via vLLM.
 
-    For each model: starts a vLLM server, runs all requested experiments
-    and methods, then shuts down before loading the next model.
+    For each model: starts a vLLM server, runs all requested experiments,
+    versions, and methods, then shuts down before loading the next model.
     """
     models = models or LOCAL_MODELS
-    methods = _resolve_methods(methods, version, ALL_METHODS)
+    versions = versions or list(PROMPT_BUILDERS.keys())
     experiments = experiments or list(EXPERIMENT_RUNNERS.keys())
     base_url = f"http://127.0.0.1:{port}/v1"
 
@@ -143,15 +143,17 @@ def run_local_models(
                 model=model,
             )
 
-            for method in methods:
-                for exp_name in experiments:
-                    exp_fn = EXPERIMENT_RUNNERS[exp_name]
-                    print(f"\n  >>> {exp_name} / {method}")
-                    try:
-                        exp_fn(client, method, version, base_url)
-                    except Exception as e:
-                        print(f"  ERROR in {exp_name}/{method}: {e}")
-                        continue
+            for version in versions:
+                version_methods = _resolve_methods(methods, version, ALL_METHODS)
+                for method in version_methods:
+                    for exp_name in experiments:
+                        exp_fn = EXPERIMENT_RUNNERS[exp_name]
+                        print(f"\n  >>> {exp_name} / {method} / {version}")
+                        try:
+                            exp_fn(client, method, version, base_url)
+                        except Exception as e:
+                            print(f"  ERROR in {exp_name}/{method}/{version}: {e}")
+                            continue
 
         finally:
             stop_vllm_server(proc)
@@ -164,7 +166,7 @@ def run_api_models(
     models: list[dict] | None = None,
     methods: list[str] | None = None,
     experiments: list[str] | None = None,
-    version: str = "prompting-v1",
+    versions: list[str] | None = None,
 ) -> None:
     """Run experiments on API models (OpenAI, Gemini).
 
@@ -172,7 +174,7 @@ def run_api_models(
     is not set.
     """
     models = models or API_MODELS
-    methods = _resolve_methods(methods, version, API_METHODS)
+    versions = versions or list(PROMPT_BUILDERS.keys())
     experiments = experiments or list(EXPERIMENT_RUNNERS.keys())
 
     for model_cfg in models:
@@ -197,15 +199,17 @@ def run_api_models(
             model=model,
         )
 
-        for method in methods:
-            for exp_name in experiments:
-                exp_fn = EXPERIMENT_RUNNERS[exp_name]
-                print(f"\n  >>> {exp_name} / {method}")
-                try:
-                    exp_fn(client, method, version, base_url)
-                except Exception as e:
-                    print(f"  ERROR in {exp_name}/{method}: {e}")
-                    continue
+        for version in versions:
+            version_methods = _resolve_methods(methods, version, API_METHODS)
+            for method in version_methods:
+                for exp_name in experiments:
+                    exp_fn = EXPERIMENT_RUNNERS[exp_name]
+                    print(f"\n  >>> {exp_name} / {method} / {version}")
+                    try:
+                        exp_fn(client, method, version, base_url)
+                    except Exception as e:
+                        print(f"  ERROR in {exp_name}/{method}/{version}: {e}")
+                        continue
 
 
 # CLI
@@ -222,9 +226,11 @@ def main(args_list: list[str] | None = None) -> None:
         help="Which model set to run (default: all)",
     )
     parser.add_argument(
-        "--version",
-        default="prompting-v1",
-        help="Prompt version to use (default: prompting-v1)",
+        "--versions",
+        nargs="+",
+        choices=list(PROMPT_BUILDERS.keys()),
+        default=None,
+        help="Prompt version(s) to run (default: all defined in PROMPT_BUILDERS)",
     )
     parser.add_argument(
         "--port",
@@ -262,7 +268,7 @@ def main(args_list: list[str] | None = None) -> None:
             models=args.models,
             methods=args.methods,
             experiments=args.experiments,
-            version=args.version,
+            versions=args.versions,
             port=args.port,
             vllm_extra_args=args.vllm_extra_args,
         )
@@ -271,7 +277,7 @@ def main(args_list: list[str] | None = None) -> None:
         run_api_models(
             methods=args.methods,
             experiments=args.experiments,
-            version=args.version,
+            versions=args.versions,
         )
 
 
