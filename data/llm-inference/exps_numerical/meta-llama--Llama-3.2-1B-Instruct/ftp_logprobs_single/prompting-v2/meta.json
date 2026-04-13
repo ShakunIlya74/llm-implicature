@@ -1,0 +1,11 @@
+{
+  "model": "meta-llama/Llama-3.2-1B-Instruct",
+  "method": "ftp_logprobs_single",
+  "prompt_version": "prompting-v2",
+  "experiment": "exps_numerical",
+  "temperature": 0.0,
+  "max_tokens": 256,
+  "base_url": "http://127.0.0.1:8000/v1",
+  "timestamp": "2026-04-13T13:49:14.786778+00:00",
+  "git_commit": "e592e065350cd9849f993cd9f637bf539f86955e"
+}

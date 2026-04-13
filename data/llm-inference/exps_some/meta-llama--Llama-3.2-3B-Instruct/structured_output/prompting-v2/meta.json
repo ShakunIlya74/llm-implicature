@@ -1,0 +1,11 @@
+{
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "method": "structured_output",
+  "prompt_version": "prompting-v2",
+  "experiment": "exps_some",
+  "temperature": 0.0,
+  "max_tokens": 256,
+  "base_url": "http://127.0.0.1:8000/v1",
+  "timestamp": "2026-04-13T13:50:33.177304+00:00",
+  "git_commit": "e592e065350cd9849f993cd9f637bf539f86955e"
+}

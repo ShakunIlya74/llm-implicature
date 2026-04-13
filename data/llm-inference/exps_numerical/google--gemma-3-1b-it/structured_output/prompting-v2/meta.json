@@ -1,0 +1,11 @@
+{
+  "model": "google/gemma-3-1b-it",
+  "method": "structured_output",
+  "prompt_version": "prompting-v2",
+  "experiment": "exps_numerical",
+  "temperature": 0.0,
+  "max_tokens": 256,
+  "base_url": "http://127.0.0.1:8000/v1",
+  "timestamp": "2026-04-13T13:57:46.978155+00:00",
+  "git_commit": "443c44a3847ac2806beffd7e7b2ce5d49deec945"
+}

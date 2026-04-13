@@ -1,0 +1,11 @@
+{
+  "model": "Qwen/Qwen3.5-9B",
+  "method": "ftp_logprobs_prefilling",
+  "prompt_version": "prompting-v2",
+  "experiment": "exps_numerical",
+  "temperature": 0.0,
+  "max_tokens": 256,
+  "base_url": "http://127.0.0.1:8000/v1",
+  "timestamp": "2026-04-13T13:47:31.675700+00:00",
+  "git_commit": "e592e065350cd9849f993cd9f637bf539f86955e"
+}
