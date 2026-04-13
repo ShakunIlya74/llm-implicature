@@ -1,0 +1,11 @@
+{
+  "model": "gemini-3.1-flash-lite-preview",
+  "method": "structured_output",
+  "prompt_version": "prompting-v2",
+  "experiment": "exps_some",
+  "temperature": 0.0,
+  "max_tokens": 256,
+  "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+  "timestamp": "2026-04-13T15:11:27.595577+00:00",
+  "git_commit": "52563ed2bc761b354eb97b0962efb4747641a5ee"
+}

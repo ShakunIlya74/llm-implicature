@@ -1,0 +1,11 @@
+{
+  "model": "gpt-5.4-mini",
+  "method": "structured_output",
+  "prompt_version": "prompting-v2",
+  "experiment": "exps_numerical",
+  "temperature": 0.0,
+  "max_tokens": 256,
+  "base_url": "https://api.openai.com/v1",
+  "timestamp": "2026-04-13T15:09:35.580898+00:00",
+  "git_commit": "52563ed2bc761b354eb97b0962efb4747641a5ee"
+}
