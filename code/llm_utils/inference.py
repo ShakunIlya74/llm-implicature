@@ -28,11 +28,22 @@ class InferenceClient:
         model: str,
         temperature: float = 0.0,
         default_max_tokens: int = 256,
+        use_max_completion_tokens: bool = False,
+        supports_logprobs: bool = True,
+        max_top_logprobs: int = 10,
     ):
         self.client = OpenAI(base_url=base_url, api_key=api_key)
         self.model = model
         self.temperature = temperature
         self.default_max_tokens = default_max_tokens
+        self.use_max_completion_tokens = use_max_completion_tokens
+        self.supports_logprobs = supports_logprobs
+        self.max_top_logprobs = max_top_logprobs
+
+    def _tokens_kwarg(self, n: int) -> dict:
+        """Return the correct max-tokens kwarg for this model."""
+        key = "max_completion_tokens" if self.use_max_completion_tokens else "max_tokens"
+        return {key: n}
 
     def structured_output(
         self,
@@ -54,7 +65,7 @@ class InferenceClient:
                 model=self.model,
                 messages=current_messages,
                 temperature=self.temperature,
-                max_tokens=max_tokens,
+                **self._tokens_kwarg(max_tokens),
                 response_format={"type": "json_object"},
             )
 
@@ -112,7 +123,7 @@ class InferenceClient:
             model=self.model,
             messages=messages,
             temperature=self.temperature,
-            max_tokens=max_tokens or self.default_max_tokens,
+            **self._tokens_kwarg(max_tokens or self.default_max_tokens),
         )
         raw_output = response.choices[0].message.content or ""
         return {"output": raw_output}
@@ -132,9 +143,9 @@ class InferenceClient:
             model=self.model,
             messages=messages,
             temperature=self.temperature,
-            max_tokens=max_tokens,
+            **self._tokens_kwarg(max_tokens),
             logprobs=True,
-            top_logprobs=top_logprobs,
+            top_logprobs=min(top_logprobs, self.max_top_logprobs),
         )
         choice = response.choices[0]
         raw_output = choice.message.content or ""

@@ -26,9 +26,6 @@ from exps_numerical import run_numerical_experiment
 # Model registries
 
 LOCAL_MODELS = [
-    # TODO: check if  model list is the sota in these families in their seizes (<=9b)
-    # "Qwen/Qwen3-1.7B",
-    # "Qwen/Qwen3-8B",
     # qwen 3.5
     "Qwen/Qwen3.5-0.8B",
     "Qwen/Qwen3.5-2B",
@@ -54,21 +51,30 @@ API_MODELS = [
     #     "model": "gpt-5.4-nano",
     #     "base_url": "https://api.openai.com/v1",
     #     "api_key_env": "OPENAI_API_KEY",
+    #     "use_max_completion_tokens": True,  # newer OpenAI models require this
+    #     "supports_logprobs": False,
+    #     "max_top_logprobs": 5,  # gpt-5.4-nano caps at 5
     # },
-    # {
-    #     "model": "gpt-5.4-mini",
-    #     "base_url": "https://api.openai.com/v1",
-    #     "api_key_env": "OPENAI_API_KEY",
-    # },
+    {
+        "model": "gpt-5.4-mini",
+        "base_url": "https://api.openai.com/v1",
+        "api_key_env": "OPENAI_API_KEY",
+        "use_max_completion_tokens": True,
+        "supports_logprobs": False,
+    },
     {
         "model": "gemini-3.1-flash-lite-preview",
         "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
         "api_key_env": "GEMINI_API_KEY",
+        "use_max_completion_tokens": False,
+        "supports_logprobs": False,  # Gemini OpenAI-compat layer lacks logprobs
     },
     # {
     #     "model": "gemini-3.1-pro-preview",
     #     "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
     #     "api_key_env": "GEMINI_API_KEY",
+    #     "use_max_completion_tokens": False,
+    #     "supports_logprobs": False,  # Gemini OpenAI-compat layer lacks logprobs
     # },
 ]
 
@@ -202,14 +208,24 @@ def run_api_models(
         print(f"API MODEL: {model}")
         print(f"{'=' * 60}")
 
+        supports_logprobs = model_cfg.get("supports_logprobs", True)
         client = InferenceClient(
             base_url=base_url,
             api_key=api_key,
             model=model,
+            use_max_completion_tokens=model_cfg.get("use_max_completion_tokens", False),
+            supports_logprobs=supports_logprobs,
+            max_top_logprobs=model_cfg.get("max_top_logprobs", 20),
         )
 
+        # ftp_logprobs_single requires server-side logprob support
+        allowed_methods = [
+            m for m in API_METHODS
+            if m != "ftp_logprobs_single" or supports_logprobs
+        ]
+
         for version in versions:
-            version_methods = _resolve_methods(methods, version, API_METHODS)
+            version_methods = _resolve_methods(methods, version, allowed_methods)
             for method in version_methods:
                 for exp_name in experiments:
                     exp_fn = EXPERIMENT_RUNNERS[exp_name]
