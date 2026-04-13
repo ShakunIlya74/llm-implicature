@@ -1,3 +1,5 @@
 # pipeline_v1/run_all.py and tooling
 openai>=1.0.0
 pyyaml>=6.0
+# RSA paper-style plots (rsa_plot_paper_bars.py)
+matplotlib>=3.7.0

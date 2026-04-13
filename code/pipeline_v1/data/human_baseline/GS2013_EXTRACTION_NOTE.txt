@@ -19,3 +19,12 @@ TO PRODUCE human_baseline.jsonl (recommended workflow)
 Exp 2 (number words) optional: add a second CSV later using the same pattern.
 
 Source string to use in JSONL rows: gs2013_figure2c_digitized (after you fill values).
+
+PLOTTING PIPELINE (LLM + optional human on one figure)
+  - human_posterior_smoke_equal.jsonl is a uniform placeholder (NOT real data) to test overlay wiring.
+  - After you have real human_baseline.jsonl, merge into the long CSV with:
+    code/pipeline_v1/scripts/rsa_export_long_table.py ... --human-jsonl path/to/human_baseline.jsonl
+  - Then: code/pipeline_v1/scripts/rsa_plot_paper_bars.py --csv ... --out-dir ...
+
+SCALING (RSA metrics vs parameter count, mixed architectures)
+  - code/pipeline_v1/scripts/rsa_plot_scaling.py --vs-behavior ... --alpha-fits ... --out-csv ... --out-dir ...
