@@ -76,6 +76,6 @@ python code/pipeline_v1/scripts/analyze_phase_a.py --run-dir code/pipeline_v1/re
 
 - Live inference uses `openai.OpenAI(base_url=..., api_key=...).chat.completions.create(...)`. You only pay **OpenRouter** (or your provider); no separate LiteLLM product.
 - Next implementation step: build user messages from the chosen `phase_a_prompt_contract*.yaml` (or reuse `llm_utils.prompts` builders) inside `run_all.py`.
-- **RSA Task 2** (logprob / \(\alpha\) fits): see `code/pipeline_v1/rsa/README.md`.
+- RSA Task 2 (logprob / \(\alpha\) fits) is not implemented in `pipeline_v1` yet.
 - Initial candidate list for scaling tests:
   - `code/pipeline_v1/configs/models_openrouter_logprobs_initial.yaml`
