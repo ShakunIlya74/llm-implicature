@@ -30,18 +30,22 @@ LOCAL_MODELS = [
     # "Qwen/Qwen3-1.7B",
     # "Qwen/Qwen3-8B",
     # qwen 3.5
-    # "Qwen/Qwen3.5-0.8B",
-    # "Qwen/Qwen3.5-4B",
-    # "Qwen/Qwen3.5-2B",
-    # "Qwen/Qwen3.5-9B",  
+    "Qwen/Qwen3.5-0.8B",
+    "Qwen/Qwen3.5-2B",
+    "Qwen/Qwen3.5-4B",
+    "Qwen/Qwen3.5-9B",  
     # llamas
-    # "meta-llama/Llama-3.2-3B-Instruct",
+    "meta-llama/Llama-3.2-1B-Instruct",
+    "meta-llama/Llama-3.2-3B-Instruct",
     "meta-llama/Llama-3.1-8B-Instruct", 
     # phi
-    "microsoft/Phi-4-mini-instruct",
+    "microsoft/Phi-4-mini-instruct", # 3.8B  model
     # Gemmas
     "google/gemma-3-1b-it",
     "google/gemma-3-4b-it",
+    # new gemma 
+    "google/gemma-4-E2B-it" # 2.3B effective (5.1B with embeddings)
+
 ]
 
 API_MODELS = [
@@ -51,11 +55,11 @@ API_MODELS = [
         "base_url": "https://api.openai.com/v1",
         "api_key_env": "OPENAI_API_KEY",
     },
-    {
-        "model": "gpt-5.4-mini",
-        "base_url": "https://api.openai.com/v1",
-        "api_key_env": "OPENAI_API_KEY",
-    },
+    # {
+    #     "model": "gpt-5.4-mini",
+    #     "base_url": "https://api.openai.com/v1",
+    #     "api_key_env": "OPENAI_API_KEY",
+    # },
     {
         "model": "gemini-3.1-flash-lite-preview",
         "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
@@ -286,6 +290,6 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         # temp testing arguments when run without args from editor
         # main(["--mode", "local", "--models", "Qwen/Qwen3.5-0.8B"])
-        main(["--mode", "local"])
+        main(["--mode", "local", "--versions", "prompting-v2"])
     else:
         main()

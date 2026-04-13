@@ -532,11 +532,11 @@ PROMPT_BUILDERS: dict[str, dict[str, Any]] = {
     "prompting-v1": {
         "structured_output": build_structured_prompt,
         # "natural_language": build_natural_prompt,
-        # "ftp_logprobs_single": build_ftp_single_prompt,
-        # "ftp_logprobs_prefilling": build_prefilling_prompt,
+        "ftp_logprobs_single": build_ftp_single_prompt,
+        "ftp_logprobs_prefilling": build_prefilling_prompt,
     },
     "prompting-v2": {
-        # "structured_output": build_structured_prompt,
+        "structured_output": build_structured_prompt,
         # "natural_language": build_natural_prompt,
         "ftp_logprobs_single": build_ftp_single_prompt_v2,
         "ftp_logprobs_prefilling": build_prefilling_prompt_v2,
