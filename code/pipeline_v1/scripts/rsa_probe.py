@@ -7,7 +7,12 @@ fits alpha on bets (paper-style), and writes:
   - rsa_vs_behavior.jsonl
 
 Usage:
-  python code/pipeline_v1/scripts/rsa_probe.py --data-root code/pipeline_v1/results
+  python code/pipeline_v1/scripts/rsa_probe.py
+
+Paths are resolved relative to the repository root (parent of `code/`). Default input is
+`data/`, using `data/llm-inference/` when that folder exists (canonical inference layout).
+
+Outputs (default) go under results/rsa_results/<timestamp>/; override with --output-dir.
 """
 
 from __future__ import annotations
@@ -24,6 +29,22 @@ from typing import Any
 COUNT_KEYS = ("0", "1", "2", "3")
 KNOW_KEYS = ("yes", "no")
 EPS = 1e-12
+
+# repo_root/code/pipeline_v1/scripts/rsa_probe.py -> parents[3] == repo root
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def resolve_data_root(raw: str) -> Path:
+    """Resolve --data-root: relative paths are from repo root; prefer data/llm-inference/."""
+    p = Path(raw)
+    if not p.is_absolute():
+        p = (REPO_ROOT / p).resolve()
+    else:
+        p = p.resolve()
+    nested = p / "llm-inference"
+    if nested.is_dir():
+        return nested
+    return p
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -302,18 +323,22 @@ def pick_prior(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="RSA probing over llm-inference outputs")
-    parser.add_argument("--data-root", default="code/pipeline_v1/results")
+    parser.add_argument(
+        "--data-root",
+        default="data",
+        help="Root directory to scan (repo-relative unless absolute). If <root>/llm-inference exists, it is used.",
+    )
     parser.add_argument(
         "--output-dir",
-        default="code/pipeline_v1/results/rsa_probe",
-        help="Directory where rsa_*.jsonl files are written",
+        default="results/rsa_results",
+        help="Directory where rsa_*.jsonl files are written (a timestamp subdir is created)",
     )
     parser.add_argument("--alpha-min", type=float, default=0.1)
     parser.add_argument("--alpha-max", type=float, default=8.0)
     parser.add_argument("--alpha-step", type=float, default=0.1)
     args = parser.parse_args()
 
-    data_root = Path(args.data_root)
+    data_root = resolve_data_root(args.data_root)
     if not data_root.exists():
         raise SystemExit(f"data root not found: {data_root}")
 
