@@ -27,15 +27,16 @@ from exps_numerical import run_numerical_experiment
 
 LOCAL_MODELS = [
     # TODO: check if  model list is the sota in these families in their seizes (<=9b)
-    "Qwen/Qwen3-1.7B",
-    "Qwen/Qwen3-8B",
+    # "Qwen/Qwen3-1.7B",
+    # "Qwen/Qwen3-8B",
     # qwen 3.5
-    "Qwen/Qwen3.5-0.8B",
-    "Qwen/Qwen3.5-4B",
-    "Qwen/Qwen3.5-2B",
+    # "Qwen/Qwen3.5-0.8B",
+    # "Qwen/Qwen3.5-4B",
+    # "Qwen/Qwen3.5-2B",
+    "Qwen/Qwen3.5-9B",  
     # llamas
-    "meta-llama/Llama-3.2-3B-Instruct",
-    "meta-llama/Llama-3.1-8B-Instruct",
+    # "meta-llama/Llama-3.2-3B-Instruct",
+    # "meta-llama/Llama-3.1-8B-Instruct", 
     # phi
     "microsoft/Phi-4-mini-instruct",
     # Gemmas
@@ -258,6 +259,7 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) == 1:
         # temp testing arguments when run without args from editor
-        main(["--mode", "local", "--models", "Qwen/Qwen3.5-0.8B"])
+        # main(["--mode", "local", "--models", "Qwen/Qwen3.5-0.8B"])
+        main(["--mode", "local"])
     else:
         main()

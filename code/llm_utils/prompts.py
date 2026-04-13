@@ -21,7 +21,8 @@ QUESTION_KEYS = {
 
 METHODS = [
     "structured_output",
-    "natural_language",
+    # disable natural language method for now since we decided not to parse those for now
+    # "natural_language",
     "ftp_logprobs_single",
     "ftp_logprobs_prefilling",
 ]

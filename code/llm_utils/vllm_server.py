@@ -17,14 +17,26 @@ def start_vllm_server(
     port: int = 8000,
     api_key: str = "token-abc123",
     dtype: str = "auto",
+    max_model_len: int = 2048,
+    gpu_memory_utilization: float = 0.85,
+    enforce_eager: bool = True,
     extra_args: Optional[list[str]] = None,
 ) -> subprocess.Popen:
     """Start the vLLM OpenAI-compatible API server as a subprocess.
 
     Returns the Popen handle so the caller can manage its lifecycle.
+
+    max_model_len: caps the KV cache to this many tokens; 2048 is ample
+        for short implicature prompts and keeps VRAM usage low.
+    gpu_memory_utilization: fraction of GPU memory vLLM claims for the
+        KV cache pool; 0.7 leaves headroom for CUDA ops 
+    enforce_eager: disables CUDA graph capture, avoiding OOM during graph
+        recording on GPUs with limited headroom 
     """
     if extra_args is None:
         extra_args = []
+
+    eager_flag = ["--enforce-eager"] if enforce_eager else []
 
     cmd = [
         "python",
@@ -40,6 +52,11 @@ def start_vllm_server(
         dtype,
         "--api-key",
         api_key,
+        "--max-model-len",
+        str(max_model_len),
+        "--gpu-memory-utilization",
+        str(gpu_memory_utilization),
+        *eager_flag,
         *extra_args,
     ]
 
