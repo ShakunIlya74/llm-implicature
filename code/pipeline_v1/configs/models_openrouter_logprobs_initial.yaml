@@ -1,0 +1,40 @@
+models:
+  - id: deepseek/deepseek-v3.2
+    provider: openrouter
+    scale_tier: frontier
+    reasoning_mode: non_reasoning
+  - id: deepseek/deepseek-r1-0528
+    provider: openrouter
+    scale_tier: frontier
+    reasoning_mode: reasoning
+  - id: qwen/qwen-2.5-7b-instruct
+    provider: openrouter
+    scale_tier: small
+    reasoning_mode: non_reasoning
+  - id: qwen/qwen-2.5-14b-instruct
+    provider: openrouter
+    scale_tier: medium
+    reasoning_mode: non_reasoning
+  - id: qwen/qwen-2.5-32b-instruct
+    provider: openrouter
+    scale_tier: medium
+    reasoning_mode: non_reasoning
+  - id: qwen/qwen3-32b
+    provider: openrouter
+    scale_tier: medium
+    reasoning_mode: non_reasoning
+  - id: qwen/qwen3-235b-a22b
+    provider: openrouter
+    scale_tier: frontier
+    reasoning_mode: reasoning
+
+defaults:
+  provider: openrouter
+  requires_logprobs: true
+  required_parameters:
+    - logprobs
+    - top_logprobs
+    - seed
+  verification:
+    source: "openrouter /models endpoint"
+    verified_at_runtime: false

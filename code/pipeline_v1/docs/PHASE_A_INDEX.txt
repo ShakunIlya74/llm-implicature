@@ -1,0 +1,39 @@
+Phase A — file index (additive; does not replace existing configs)
+
+Configs (YAML)
+  code/pipeline_v1/configs/experiment.phase_a.yaml
+    Full factorial for quantifier block; output: data/processed/stimuli.phase_a.jsonl
+  code/pipeline_v1/configs/experiment.phase_a_smoke.yaml
+    One-row smoke test; output: data/processed/stimuli.phase_a_smoke.jsonl
+  code/pipeline_v1/configs/experiment.phase_a_live_single.yaml
+    Full 2430-row grid, live API, single model; run.concurrency default 15
+  code/pipeline_v1/configs/models_live_single.yaml
+    Single small model for cheap live tests
+  code/pipeline_v1/configs/experiment.yaml
+    Original project config (unchanged by Phase A index)
+
+Prompt contracts (YAML) — run_all default: gs2013 wording (prompt_contract_path in experiment YAML)
+  code/pipeline_v1/prompts/phase_a_prompt_contract.yaml
+    phase_a_v1 (assistant draft wording)
+  code/pipeline_v1/prompts/phase_a_prompt_contract_gs2013_wording.yaml
+    phase_a_v1_gs2013_wording (betting lines match llm_utils.prompts BETTING_* verbatim)
+  code/pipeline_v1/prompts/gs2013_message_builder.py
+    Builds system/user messages from contract + stimulus + STORIES
+
+Human baseline
+  code/pipeline_v1/data/human_baseline/baseline_points.schema.json
+  code/pipeline_v1/data/human_baseline/PLACEHOLDER.txt
+  code/pipeline_v1/data/human_baseline/example_row.json
+  code/pipeline_v1/data/human_baseline/gs2013_extracted_from_text.json
+    Narrative stats from paper text (not per-bar digitization)
+
+Runner note
+  Override contract: run_all.py --prompt-contract <path>
+
+Stimulus generator (existing script; pass --config)
+  code/pipeline_v1/scripts/generate_stimuli.py
+
+Commands (from repo root llm-implicature-main, PYTHONPATH=code)
+  set PYTHONPATH=code
+  python code/pipeline_v1/scripts/generate_stimuli.py --config code/pipeline_v1/configs/experiment.phase_a.yaml
+  python code/pipeline_v1/scripts/generate_stimuli.py --config code/pipeline_v1/configs/experiment.phase_a_smoke.yaml

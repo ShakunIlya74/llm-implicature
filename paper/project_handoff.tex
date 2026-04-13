@@ -1,0 +1,97 @@
+% Project handoff: scheme, file index, and next steps (ModAg WS2025/26).
+% Compile from repo root: pdflatex paper/project_handoff.tex (run twice if needed).
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+\title{\textbf{Project handoff checklist}\\{\large LLM implicature / G\&S replication + scaling}}
+\author{Modeling Agents (WS2025/26) --- University of T\"{u}bingen}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Goal (one paragraph)}
+Replicate and extend Goodman \& Stuhlm\"{u}ller (2013) style \emph{knowledge access} $\times$ \emph{utterance} judgments in LMs: elicit distributions over world states $\{0,1,2,3\}$ (and knowledge bets), compare across \textbf{model scale} and \textbf{prompt strategy}, and optionally compare to published human aggregates. RSA-style mechanism probes (priors, quantifier log-probabilities, $\alpha$) are planned but not required for a minimal course deliverable.
+
+\section{Hypotheses (proposal alignment)}
+\begin{itemize}
+  \item \textbf{O1 (emergent rationality):} larger / stronger models behave more like humans (when digitized baselines exist) and show tighter consistency between listener judgments and RSA-style components.
+  \item \textbf{O2 (prompt independence):} larger models vary less across prompting strategies than smaller models.
+\end{itemize}
+
+\section{End-to-end workflow (canonical)}
+\begin{enumerate}
+  \item Install deps: \texttt{pip install -r requirements.txt} (\texttt{openai}, \texttt{pyyaml}). Set \texttt{PYTHONPATH=code} and configure root \texttt{.env} (\texttt{OPENROUTER\_API\_KEY} or \texttt{LITELLM\_API\_KEY}).
+  \item Choose experiment YAML: full factorial \texttt{experiment.phase\_a.yaml}; smoke \texttt{experiment.phase\_a\_smoke.yaml}; live single-model full grid \texttt{experiment.phase\_a\_live\_single.yaml}.
+  \item Run \texttt{code/pipeline\_v1/scripts/generate\_stimuli.py --config ...} $\rightarrow$ \texttt{code/pipeline\_v1/data/processed/stimuli*.jsonl}.
+  \item Point \texttt{run\_all.py} at models YAML (e.g.\ \texttt{models\_live\_single.yaml} or \texttt{models\_openrouter\_logprobs\_initial.yaml}).
+  \item Run \texttt{code/pipeline\_v1/run\_all.py} (set \texttt{dry\_run: false} for live calls; optional \texttt{--concurrency 15}) $\rightarrow$ \texttt{code/pipeline\_v1/results/runs/<timestamp>/}.
+  \item \texttt{code/pipeline\_v1/scripts/extract\_distributions.py --run-dir ...}
+  \item \texttt{code/pipeline\_v1/scripts/analyze\_phase\_a.py --run-dir ...} (optional \texttt{--human-baseline ...}).
+\end{enumerate}
+
+\section{What is implemented vs.\ what the paper claims}
+\begin{itemize}
+  \item \textbf{Stimulus design:} Full Phase~A quantifier factorial in JSONL (stories, $k$, utterances, paraphrases, prior/posterior/knowledge) matches the intended G\&S-style \emph{design}.
+  \item \textbf{Runner prompt:} \texttt{run\_all.py} loads \texttt{phase\_a\_prompt\_contract\_gs2013\_wording.yaml} (see \texttt{prompt\_contract\_path}) and builds messages in \texttt{code/pipeline\_v1/prompts/gs2013\_message\_builder.py} (betting text, \texttt{setup}, conditional \texttt{utterance\_text}, questions from \texttt{STORIES}).
+  \item \textbf{Legacy run:} Full-grid live single model \texttt{20260411-193347} used the \textbf{pre-wiring} placeholder prompt; supersede it for behavioral analysis.
+  \item \textbf{Scaling / proposal:} Multi-tier model panels and RSA Task~2 (logprob $\alpha$) are \textbf{planned}; not fully executed in \texttt{pipeline\_v1} yet.
+\end{itemize}
+
+\section{Key files and directories}
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}p{0.42\textwidth}p{0.52\textwidth}@{}}
+\toprule
+\textbf{Path} & \textbf{Role} \\
+\midrule
+\texttt{proposal/proposal.tex} & Course proposal (theory + tasks). \\
+\texttt{paper/main.tex} & Main write-up; includes pipeline + scaling sections. \\
+\texttt{paper/Goodman\_Stuhlmueller\_2012\_cogsci\_implicature.pdf} & Source PDF (CogSci version). \\
+\texttt{paper/figures/*.png} & Exported PDF pages for figure digitization. \\
+\texttt{code/pipeline\_v1/configs/experiment.phase\_a.yaml} & Phase~A factorial config. \\
+\texttt{code/pipeline\_v1/configs/experiment.phase\_a\_smoke.yaml} & One-row / tiny smoke config. \\
+\texttt{code/pipeline\_v1/configs/experiment.phase\_a\_live\_single.yaml} & Full $2430$ grid, live API, single model, \texttt{concurrency: 15}. \\
+\texttt{code/pipeline\_v1/configs/models\_live\_single.yaml} & One-model shortlist for cheap live tests. \\
+\texttt{code/pipeline\_v1/prompts/phase\_a\_prompt\_contract*.yaml} & Prompt contracts (pick one for the runner). \\
+\texttt{code/pipeline\_v1/scripts/generate\_stimuli.py} & Build stimuli JSONL (no API). \\
+\texttt{code/pipeline\_v1/scripts/filter\_openrouter\_models.py} & Filter OpenRouter models by \texttt{logprobs}/\texttt{seed}/etc. \\
+\texttt{code/pipeline\_v1/configs/models\_openrouter\_logprobs\_all\_bucketed.yaml} & Models grouped by \texttt{scale\_tier}. \\
+\texttt{code/pipeline\_v1/run\_all.py} & OpenRouter batch runner (OpenAI Python SDK). \\
+\texttt{code/pipeline\_v1/scripts/extract\_distributions.py} & Parse responses $\rightarrow$ distributions. \\
+\texttt{code/pipeline\_v1/scripts/analyze\_phase\_a.py} & Aggregates + shift metrics; optional human JSONL. \\
+\texttt{code/pipeline\_v1/data/human\_baseline/*} & Schema, templates, text-extracted stats, digitization CSV template. \\
+\texttt{code/llm\_utils/prompts.py} & G\&S stories, validators, and prompt-building helpers. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Scaling-up design (summary)}
+Same stimuli and metrics for all models; \textbf{scale} enters only through the model list. Use \texttt{scale\_tier} on each model row; analyze by tier $\times$ \texttt{prompt\_strategy}. Control cost by selecting a representative \emph{panel} per tier from the bucketed YAML rather than running every endpoint.
+
+\section{Human baseline status}
+\begin{itemize}
+  \item \textbf{No new human subjects} required for the default course path.
+  \item Full per-bar human means are \emph{not} in PDF text; digitize Figure~2c/2d (see \texttt{paper/figures/}) or email authors for raw data.
+  \item Narrative statistics extracted from PDF text: \texttt{code/pipeline\_v1/data/human\_baseline/gs2013\_extracted\_from\_text.json}.
+  \item Template for Exp1 ``some'' posterior: \texttt{gs2013\_exp1\_some\_posterior\_template.csv}; converter \texttt{scripts/gs2013\_csv\_to\_jsonl.py}.
+\end{itemize}
+
+\section{Known gaps for the incoming implementer}
+\begin{itemize}
+  \item \textbf{Next:} Re-run full Phase~A live ($2430$ rows) with \texttt{experiment.phase\_a\_live\_single.yaml} or multi-model list; smoke live \texttt{20260411-201009} validates OpenAI SDK + G\&S prompts. Discard legacy \texttt{20260411-193347} for analysis. Compare to human JSONL.
+  \item Optional: join \texttt{scale\_tier} from the models YAML into \texttt{meta.json} / per-row records for automated tier-stratified tables.
+  \item RSA Task~2: define utility + token strings for quantifier log-prob fits; script beyond exploratory calls.
+  \item Human baseline: convert digitized figure bars or \texttt{gs2013\_extracted\_from\_text.json} into schema-valid JSONL for \texttt{analyze\_phase\_a.py}.
+\end{itemize}
+
+\section*{Compile}
+\texttt{pdflatex paper/project\_handoff.tex} \quad and \quad \texttt{pdflatex paper/main.tex}
+
+\end{document}

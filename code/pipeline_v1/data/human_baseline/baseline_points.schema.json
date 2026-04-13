@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-implicature.local/schemas/human_baseline_point.json",
+  "title": "Human baseline point (G&S-style)",
+  "description": "One row per (story, k, utterance, question slice) and state. Source = digitized paper or new collection.",
+  "type": "object",
+  "required": [
+    "source",
+    "experiment_block",
+    "story_shortname",
+    "k",
+    "utterance_type",
+    "utterance",
+    "state",
+    "p_human"
+  ],
+  "properties": {
+    "source": {
+      "type": "string",
+      "description": "e.g. gs2013_figure1_digitized, gs2013_table_X, lab_run_2026_04"
+    },
+    "experiment_block": {
+      "type": "string",
+      "enum": ["quantifier", "number_word"]
+    },
+    "story_shortname": {
+      "type": "string"
+    },
+    "k": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
+    "utterance_type": {
+      "type": "string",
+      "enum": ["quantifier", "number_word"]
+    },
+    "utterance": {
+      "type": "string",
+      "description": "none|some|all or number-word label"
+    },
+    "question_key": {
+      "type": "string",
+      "enum": ["prior", "posterior", "knowledge"]
+    },
+    "state": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "p_human": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Probability or normalized mean bet on this state"
+    },
+    "n_participants": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Optional; omit if only aggregated paper values"
+    },
+    "ci_low": { "type": "number" },
+    "ci_high": { "type": "number" },
+    "notes": { "type": "string" }
+  },
+  "additionalProperties": false
+}

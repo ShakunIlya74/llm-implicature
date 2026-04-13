@@ -1,0 +1,21 @@
+Goodman & Stuhlmüller (2012 CogSci PDF / 2013 TiCS) — what was automated vs manual
+
+AUTOMATED (done in-repo)
+  - Full text extraction: paper/Goodman_Stuhlmueller_2012_extracted_text.txt
+  - Figure pages exported as PNG (300 dpi): paper/figures/gs2012_page2_300dpi.png … page4
+  - Repro script: code/pipeline_v1/scripts/export_gs2013_pdf_assets.py
+
+NOT IN MACHINE-READABLE FORM IN THE PDF
+  - Per-condition mean bets for each bar in Figure 2c/2d are ONLY in the figure images, not as a table in the text.
+  - The narrative reports tests (F, t, p) and global fit (RMSE=9.01, r=0.96) but not each bar height.
+
+TO PRODUCE human_baseline.jsonl (recommended workflow)
+  1) Open paper/figures/gs2012_page3_300dpi.png (and page2 if needed) — Figure 2c shows Exp 1 quantifier “some”.
+  2) Use WebPlotDigitizer (or read bar heights visually) to fill:
+     gs2013_exp1_some_posterior_template.csv
+  3) Run:
+     python code/pipeline_v1/scripts/gs2013_csv_to_jsonl.py --csv ... --out human_baseline.jsonl
+
+Exp 2 (number words) optional: add a second CSV later using the same pattern.
+
+Source string to use in JSONL rows: gs2013_figure2c_digitized (after you fill values).

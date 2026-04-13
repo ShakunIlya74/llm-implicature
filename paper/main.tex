@@ -1,0 +1,109 @@
+% Project write-up (ModAg WS2025/26). For ACL-style formatting, use the official
+% ACL template (https://2023.aclweb.org/calls/style_and_formatting/) on Overleaf
+% and paste these sections into it. Local compile: pdflatex main.tex (twice if needed).
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{graphicx}
+
+\title{Reverse-Engineering Scalar Implicatures in Language Models:\\
+A Rational Speech Act Analysis of Speaker Knowledge Effects}
+\author{Jingyu Han, Illia Shakun, Yank{\i} \"{O}zt\"{u}rk, Lukas Viest\"{a}dt \\
+\textit{Modeling Agents (WS2025/26)} --- University of T\"{u}bingen \\
+Instructor: Polina Tsvilodub}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We replicate and extend the experimental paradigm of Goodman \& Stuhlm\"{u}ller \cite{goodman2013knowledge} to evaluate whether large language models (LMs) adjust pragmatic interpretations of scalar quantifiers and number words according to a speaker's epistemic access $k$, and whether LM behavior aligns with a rational speech act (RSA) analysis. The \textbf{experimental design} (stories, $k$, quantifiers, question types, prompt strategies) is implemented in the repository. The \textbf{inference runner} now builds G\&S-aligned messages from \texttt{phase\_a\_prompt\_contract\_gs2013\_wording.yaml} and \texttt{llm\_utils.prompts.STORIES} (betting instructions, setup, speaker line when applicable, and prior/posterior/knowledge questions). An earlier full-grid live run used a placeholder prompt and should be superseded for behavioral analysis. Human-baseline comparison uses schema-validated JSONL (digitized figures or extracted statistics).
+\end{abstract}
+
+\noindent\textit{Repository handoff (file index, workflow, gaps):} see \texttt{paper/project\_handoff.tex}.
+
+\section{Introduction}
+Scalar implicatures (e.g., interpreting ``some'' as ``some but not all'') depend not only on lexical alternatives but on social reasoning about what a speaker could know \cite{goodman2013knowledge}. We ask whether LMs exhibit human-like sensitivity to speaker access $k$ (how many of three objects the speaker has observed) and whether their internal components (priors, speaker likelihoods) are consistent with RSA-style composition.
+
+\section{Methods}
+
+\subsection{Task and design}
+Following Goodman \& Stuhlm\"{u}ller \cite{goodman2013knowledge}, each item fixes $N{=}3$ objects, manipulates speaker access $k \in \{1,2,3\}$, and varies the quantifier utterance among \texttt{none}, \texttt{some}, and \texttt{all}. For each stimulus we elicit three question types: prior belief over counts, posterior belief after the utterance, and a binary knowledge judgment (whether the speaker knows the exact count). Prompting strategies (baseline, chain-of-thought, structured JSON bets) follow the project pipeline configuration.
+
+\subsection{Materials and implementation}
+Stimuli are generated deterministically from the repository stories (\texttt{llm\_utils.prompts.STORIES}) via \texttt{code/pipeline\_v1/scripts/generate\_stimuli.py} and the Phase~A experiment config. Each JSONL row includes \texttt{setup}, \texttt{utterance\_text}, \texttt{question\_key}, \texttt{state\_space}, and factorial metadata (\texttt{k}, \texttt{utterance}, \texttt{prompt\_strategy}, paraphrase id). The runner \texttt{code/pipeline\_v1/run\_all.py} dispatches model calls (or dry-run placeholders). Responses are parsed into distributions with \texttt{scripts/extract\_distributions.py} and summarized with \texttt{scripts/analyze\_phase\_a.py}.
+
+\subsection{Implementation status (design vs.\ runner)}
+\label{sec:impl_status}
+\textbf{Aligned with G\&S design:} stimulus generation covers the Phase~A quantifier factorial (six stories $\times$ $k\in\{1,2,3\}$ $\times$ \{\texttt{none}, \texttt{some}, \texttt{all}\} $\times$ three prompt strategies $\times$ five paraphrases $\times$ \{prior, posterior, knowledge\}), producing $2430$ rows by default (\texttt{stimuli.phase\_a.jsonl}). Optional number-word blocks are supported by the generator when \texttt{include\_number\_words: true}.
+
+\textbf{Runner prompts (current):} \texttt{run\_all.py} loads \texttt{code/pipeline\_v1/prompts/phase\_a\_prompt\_contract\_gs2013\_wording.yaml} (config key \texttt{prompt\_contract\_path}) and builds system/user messages in \texttt{code/pipeline\_v1/prompts/gs2013\_message\_builder.py}: betting preamble and reminder, story \texttt{setup}, speaker line (\texttt{utterance\_text}) when \texttt{question\_key} is posterior or knowledge, and the appropriate question string from \texttt{llm\_utils.prompts.STORIES} (\texttt{prior\_q}, \texttt{posterior\_q}, \texttt{knowledge\_q}). \textbf{Earlier} single-model live runs (e.g.\ \texttt{20260411-193347}) used a placeholder user string and are \emph{not} comparable to new runs.
+
+\textbf{Concurrency:} batch calls use \texttt{ThreadPoolExecutor}; default and config field \texttt{run.concurrency} is $15$ unless overridden by \texttt{--concurrency}.
+
+\subsection{Pipeline (current workflow)}
+\label{sec:pipeline}
+The evaluation loop is fixed across models and scales; only the model list and API keys change between runs. The canonical steps are:
+\begin{enumerate}
+  \item \textbf{Configure.} Phase~A experiment YAML (\texttt{experiment.phase\_a.yaml} or smoke variants) sets factorial factors: stories, $k$, quantifiers, prompt strategies, paraphrase variants, and question types (prior, posterior, knowledge). Prompt wording is versioned in \texttt{code/pipeline\_v1/prompts/phase\_a\_prompt\_contract*.yaml}.
+  \item \textbf{Generate stimuli.} \texttt{python code/pipeline\_v1/scripts/generate\_stimuli.py --config ...} writes \texttt{stimuli*.jsonl} under \texttt{code/pipeline\_v1/data/processed/} (no LLM calls).
+  \item \textbf{Select models.} A YAML list (e.g.\ \texttt{models\_openrouter\_logprobs\_*.yaml}) assigns each model an identifier and, for scaling analyses, a \texttt{scale\_tier} (see \S\ref{sec:scaling}). Optional filtering uses \texttt{code/pipeline\_v1/scripts/filter\_openrouter\_models.py} against OpenRouter's \texttt{/models} API for capabilities such as \texttt{logprobs} and \texttt{seed}.
+  \item \textbf{Run inference.} \texttt{code/pipeline\_v1/run\_all.py} reads the stimuli JSONL and model list, calls OpenRouter using the OpenAI Python SDK (\texttt{openai} package), and writes a timestamped run directory with \texttt{responses.jsonl} and \texttt{meta.json}.
+  \item \textbf{Parse distributions.} \texttt{code/pipeline\_v1/scripts/extract\_distributions.py} converts raw completions into normalized probability vectors (and flags parse failures).
+  \item \textbf{Analyze.} \texttt{code/pipeline\_v1/scripts/analyze\_phase\_a.py} aggregates per condition and can compare against an optional human-baseline JSONL.
+\end{enumerate}
+Environment variables for API access live in a root \texttt{.env} file (not committed). Phase~A scaling runs use \texttt{pipeline\_v1} only.
+
+\subsection{Scaling-up design}
+\label{sec:scaling}
+\textbf{Goal.} Treat model scale as an explicit factor in the \emph{same} experimental design: identical stimuli, prompts, and metrics; variation only in which LM is queried. This supports two project hypotheses: \textbf{O1 (emergent rationality)}---larger or more capable models show behavioral patterns closer to human aggregates (when digitized) and stronger internal consistency between listener judgments and RSA-style components; \textbf{O2 (prompt independence)}---larger models are less sensitive to prompting strategy, while smaller models vary more across baseline, chain-of-thought, and structured-output protocols.
+
+\textbf{Stratification.} Models are tagged with a discrete \texttt{scale\_tier} derived from public parameter counts in the model slug where possible (e.g.\ very\_small $\leq 4$B, small up to $\approx 10$B, medium up to $\approx 40$B, large/frontier above that; MoE models record total and active parameters when both appear). The file \texttt{code/pipeline\_v1/configs/models\_openrouter\_logprobs\_all\_bucketed.yaml} lists candidates grouped by tier; cost control is achieved by selecting a \emph{panel} of representative models per tier rather than exhaustively evaluating every endpoint.
+
+\textbf{Analysis.} Primary plots and tables stratify outcomes by \texttt{scale\_tier} and, for O2, include an interaction with \texttt{prompt\_strategy}. Core behavioral metrics (e.g.\ implicature shift on posterior bets for \texttt{some}) are computed identically within each tier. Optional RSA-style probes (priors, next-token quantifier log-probabilities, $\alpha$ fits) use the same tier labels so mechanism-level trends can be reported alongside behavioral scaling.
+
+\subsection{Models}
+We evaluate multiple OpenRouter-hosted models spanning small to frontier scales. The default shortlist is \texttt{code/pipeline\_v1/configs/models\_openrouter\_logprobs\_initial.yaml}; the full filtered and bucketed pool is \texttt{models\_openrouter\_logprobs\_all\_bucketed.yaml}. Local or API backends that speak the same JSONL schema may be substituted without changing the factorial design.
+
+\subsection{Human baseline}
+Human comparison uses published Goodman \& Stuhlm\"{u}ller (2013) aggregates digitized into JSONL rows validating \texttt{code/pipeline\_v1/data/human\_baseline/baseline\_points.schema.json} (no new human collection required for the default course path). Narrative statistics extracted from the paper text are kept in \texttt{gs2013\_extracted\_from\_text.json}; per-bar means require figure digitization or author data.
+
+\subsection{Metrics}
+We report (i) qualitative implicature-shift summaries, e.g.\ $P(\text{state}=3 \mid u{=}\text{some}, k{=}1) - P(\text{state}=3 \mid u{=}\text{some}, k{=}3)$ on posterior bets, and (ii) mean absolute error against digitized human points when available. KL divergence between LM and human distributions is planned for the final analysis. All metrics are computed per model and---for scaling analyses---aggregated or visualized by \texttt{scale\_tier} and \texttt{prompt\_strategy} as in \S\ref{sec:scaling}.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Pipeline verification (dry-run)}
+A full-grid dry-run over all Phase~A quantifier stimuli ($2430$ rows $\times$ $7$ models) completed successfully; outputs are under \texttt{code/pipeline\_v1/results/runs/20260411-192257/}, including \texttt{responses.jsonl}, \texttt{distributions.jsonl}, and \texttt{analysis\_summary.json}. Dry-run responses use fixed placeholder JSON bets so implicature metrics are not interpretable.
+
+\subsection{Engineering run (live API, placeholder prompt)}
+A full-grid \textbf{live} run over the same $2430$ stimuli with a \textbf{single} model (\texttt{qwen/qwen-2.5-7b-instruct}), \textbf{concurrency $15$}, and \texttt{dry\_run: false} completed successfully (run directory \texttt{code/pipeline\_v1/results/runs/20260411-193347/}; $2430$ lines in \texttt{responses.jsonl}; \texttt{extract\_distributions.py} reported \texttt{parse\_ok}$=2430$). That run used the \textbf{old} placeholder user message (pre--prompt-contract wiring). Re-run the same config after pulling the G\&S-aligned message builder for interpretable behavioral metrics.
+
+\subsection{Planned behavioral and alignment results}
+The runner now uses G\&S-aligned prompts (\S\ref{sec:impl_status}). \textbf{Next:} run the full $2430$-row Phase~A factorial live (e.g.\ \texttt{experiment.phase\_a\_live\_single.yaml} or multi-model YAML), then populate tables of: implicature-shift by \texttt{prompt\_strategy}; MAE vs.\ digitized human JSONL; optional KL. Smoke live after the OpenAI-SDK migration completed successfully (run \texttt{20260411-201009}). Legacy run \texttt{20260411-193347} remains invalid for behavior. Multi-model scaling uses \texttt{models\_openrouter\_logprobs\_*.yaml} as in \S\ref{sec:scaling}. RSA Task~2 (quantifier log-prob / $\alpha$ fits) remains to be scripted in \texttt{pipeline\_v1}.
+
+\section{Discussion}
+We discuss alignment with RSA predictions. \textbf{Current limitations:} (i)~full factorial not yet re-run at scale with the final prompt stack (only smoke + legacy placeholder grid); (ii)~natural-language betting responses may require robust parsing (cf.\ structured-output condition); (iii)~RSA logprob fits not yet integrated; (iv)~OpenRouter may omit \texttt{logprobs} on some models. Future work includes number-word blocks, human-baseline digitization at bar level, and optional trial-level human collection.
+
+\section{Conclusion}
+We summarize whether LMs show human-like knowledge--implicature interactions and whether component-level probes match the Bayesian story.
+
+\section*{Acknowledgments}
+Course materials and the Goodman \& Stuhlm\"{u}ller paradigm. Tools: OpenAI Python SDK, OpenRouter, repository contributors.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+
+\bibitem[{Goodman and Stuhlm\"{u}ller(2013)}]{goodman2013knowledge}
+Noah~D. Goodman and Andreas Stuhlm\"{u}ller.
+\newblock Knowledge and implicature: Modeling language understanding as social cognition.
+\newblock \emph{Topics in Cognitive Science}, 5(1):173--184, 2013.
+
+\end{thebibliography}
+
+\end{document}

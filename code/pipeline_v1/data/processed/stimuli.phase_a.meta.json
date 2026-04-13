@@ -1,0 +1,12 @@
+{
+  "config": "code\\pipeline_v1\\configs\\experiment.phase_a.yaml",
+  "output_path": "code\\pipeline_v1\\data\\processed\\stimuli.phase_a.jsonl",
+  "num_rows": 2430,
+  "num_stimulus_rows": 2430,
+  "expected_quantifier_rows": 2430,
+  "expected_number_word_rows": 0,
+  "formula_quantifier": "stories * k * utterances(none/some/all) * strategies * paraphrases * question_types",
+  "formula_number_word": "stories * numerical_conditions * strategies * paraphrases * question_types",
+  "samples_per_prompt_config": 20,
+  "note_api_calls": "Stimulus generation does not call models. API calls ~ stimulus_rows * samples_per_prompt * num_models (evaluation phase)."
+}

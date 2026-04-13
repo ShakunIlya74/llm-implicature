@@ -1,0 +1,27 @@
+{
+  "run_dir": "code\\pipeline_v1\\results\\runs\\20260411-202357",
+  "num_rows": 2430,
+  "num_parse_ok": 2426,
+  "implicature_metrics": [
+    {
+      "model_id": "qwen/qwen-2.5-7b-instruct",
+      "prompt_strategy": "baseline",
+      "metric": "some_k1_minus_k3_p_state3",
+      "value": 0.12237
+    },
+    {
+      "model_id": "qwen/qwen-2.5-7b-instruct",
+      "prompt_strategy": "cot",
+      "metric": "some_k1_minus_k3_p_state3",
+      "value": -0.015079
+    },
+    {
+      "model_id": "qwen/qwen-2.5-7b-instruct",
+      "prompt_strategy": "structured_output",
+      "metric": "some_k1_minus_k3_p_state3",
+      "value": -0.236111
+    }
+  ],
+  "human_comparison": [],
+  "human_baseline_path": null
+}

@@ -1,0 +1,8 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:conda",
+    // resolved relative to the repo root
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/code"
+    ]
+}

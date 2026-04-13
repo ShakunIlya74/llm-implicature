@@ -1,0 +1,40 @@
+experiment_name: rsa_implicature_v1
+seed: 42
+
+prompt_contract_path: code/pipeline_v1/prompts/phase_a_prompt_contract_gs2013_wording.yaml
+
+design:
+  total_items: 3
+  # null or omit = all 6 G&S stories from llm_utils.prompts
+  story_indices: null
+  knowledge_levels: [1, 2, 3]
+  utterances: ["none", "some", "all"]
+  prompt_strategies: ["baseline", "cot", "structured_output"]
+  paraphrases_per_condition: 5
+  samples_per_prompt: 20
+  # prior / posterior / knowledge — subset to [posterior] to shrink rows for dry runs
+  question_types: [prior, posterior, knowledge]
+
+generation:
+  include_number_words: false
+  number_words: ["one", "two", "three"]
+  output_path: code/pipeline_v1/data/processed/stimuli.jsonl
+
+run:
+  dry_run: true
+  max_examples: 10
+  concurrency: 15
+  # When true (or use CLI --dynamic-concurrency): 429-aware adaptive pool; concurrency is initial limit
+  dynamic_concurrency: false
+  # Optional overrides for pipeline_v1.concurrency.DynamicConcurrencyConfig
+  # dynamic_concurrency_config:
+  #   min_concurrency: 2
+  #   max_concurrency: 64
+  #   step_up: 2
+  #   success_streak_to_ramp: 30
+  #   down429_ratio: 0.5
+  temperature: 0.2
+  max_tokens: 256
+
+output:
+  run_root: code/pipeline_v1/results/runs

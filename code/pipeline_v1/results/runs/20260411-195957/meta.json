@@ -1,0 +1,11 @@
+{
+  "run_dir": "code\\pipeline_v1\\results\\runs\\20260411-195957",
+  "num_models": 1,
+  "num_examples_per_model": 1,
+  "num_tasks": 1,
+  "concurrency": 15,
+  "dry_run": true,
+  "prompt_contract_path": "code\\pipeline_v1\\prompts\\phase_a_prompt_contract_gs2013_wording.yaml",
+  "prompt_version": "phase_a_v1_gs2013_wording",
+  "timestamp": "2026-04-11T19:59:57.545782"
+}

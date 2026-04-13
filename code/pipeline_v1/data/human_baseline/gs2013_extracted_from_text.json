@@ -1,0 +1,43 @@
+{
+  "source": "Goodman_Stuhlmuller_2012_cogsci_PDF_text_extract",
+  "paper": "Knowledge and implicature: Modeling language understanding as social cognition (CogSci 2012 proc.; see also TiCS 2013)",
+  "note": "These values are quoted in the paper narrative; they do NOT replace Figure 2c/2d bar heights for P(state) posteriors.",
+  "experiment_1": {
+    "n_participants": 50,
+    "knowledge_question_bets_speaker_complete": {
+      "comment": "Mean participant bet that speaker had complete knowledge (expected direction), by speaker access manipulation",
+      "by_access": {
+        "1": {"mean": 27.1, "sd": 4.9},
+        "2": {"mean": 34.8, "sd": 5.7},
+        "3": {"mean": 93.0, "sd": 2.7}
+      }
+    },
+    "figure_2c_filter": "Include only trials where participant knowledge bet > 70 in expected direction (see paper)",
+    "anova_bet_on_state3_some": {
+      "F_df": [2, 102],
+      "F": 10.18,
+      "p": "<0.001"
+    }
+  },
+  "experiment_2": {
+    "n_participants": 50,
+    "knowledge_question_bets": {
+      "partial_access_conditions_mean": 42.0,
+      "partial_access_sd": 3.4,
+      "complete_access_conditions_mean": 92.1,
+      "complete_access_sd": 1.6
+    },
+    "figure_2d_filter": "Same >70 knowledge threshold as Exp1 (see paper)"
+  },
+  "model_fit_reported": {
+    "rmse": 9.01,
+    "r": 0.96,
+    "comment": "Fit to mean human ratings under filtered subset; not a substitute for empirical bars."
+  },
+  "still_require_digitization_or_authors": [
+    "Figure 2c: mean bets per state {0,1,2,3} for utterances none/some/all and access {1,2,3} (posterior question, collapsed across stories)",
+    "Figure 2d: number-word experiment analogous bars for conditions 1/1, 2/1, 2/2, 3/1, 3/2, 3/3",
+    "Prior-question distributions (first elicitation) if you want prior human curves matching pipeline question_key=prior",
+    "Per-trial raw data: not in PDF; contact authors or digitize figures"
+  ]
+}
