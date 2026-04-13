@@ -4,10 +4,9 @@ Reads rsa_predictions.jsonl (required) and rsa_vs_behavior.jsonl (optional) and 
 one row per (model, experiment, access, utterance, state, series).
 
 Usage (from repo root):
-  py -3 code/pipeline_v1/scripts/rsa_export_long_table.py \\
-    --predictions results/rsa_results/20260413-231950/rsa_predictions.jsonl \\
-    --vs-behavior results/rsa_results/20260413-231950/rsa_vs_behavior.jsonl \\
-    --out results/rsa_plots/rsa_long_combined.csv
+  py -3 code/pipeline_v1/scripts/rsa_export_long_table.py
+
+Omit paths to use the newest results/rsa_results/<run>/ (by rsa_predictions.jsonl mtime).
 """
 
 from __future__ import annotations
@@ -17,6 +16,24 @@ import csv
 import json
 from pathlib import Path
 from typing import Any
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
+def _latest_rsa_run_dir() -> Path:
+    base = _repo_root() / "results" / "rsa_results"
+    candidates = sorted(
+        base.glob("*/rsa_predictions.jsonl"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not candidates:
+        raise SystemExit(
+            f"No rsa_predictions.jsonl under {base}; run rsa_probe.py first."
+        )
+    return candidates[0].parent
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -90,21 +107,44 @@ def load_human_jsonl(path: Path) -> list[dict[str, Any]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="RSA predictions -> tidy long CSV")
-    parser.add_argument("--predictions", type=Path, required=True)
-    parser.add_argument("--vs-behavior", type=Path, default=None)
+    parser.add_argument(
+        "--predictions",
+        type=Path,
+        default=None,
+        help="rsa_predictions.jsonl (default: newest under results/rsa_results/)",
+    )
+    parser.add_argument(
+        "--vs-behavior",
+        type=Path,
+        default=None,
+        help="rsa_vs_behavior.jsonl (default: same run dir as predictions)",
+    )
     parser.add_argument(
         "--human-jsonl",
         type=Path,
         default=None,
         help="Optional gs2013-style human baseline JSONL (merged into same long table)",
     )
-    parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Output CSV (default: results/rsa_plots/rsa_long_combined.csv)",
+    )
     args = parser.parse_args()
 
-    pred_rows = read_jsonl(args.predictions)
+    run_dir = _latest_rsa_run_dir()
+    pred_path = args.predictions or (run_dir / "rsa_predictions.jsonl")
+    if not pred_path.exists():
+        raise SystemExit(f"Missing predictions file: {pred_path}")
+
+    vs_path = args.vs_behavior if args.vs_behavior is not None else (run_dir / "rsa_vs_behavior.jsonl")
+    out_path = args.out or (_repo_root() / "results" / "rsa_plots" / "rsa_long_combined.csv")
+
+    pred_rows = read_jsonl(pred_path)
     vs_by_key: dict[tuple[str, str, int, str], dict[str, Any]] = {}
-    if args.vs_behavior and args.vs_behavior.exists():
-        for r in read_jsonl(args.vs_behavior):
+    if vs_path.exists():
+        for r in read_jsonl(vs_path):
             k = (str(r["model_id"]), str(r["experiment"]), int(r["access"]), str(r["utterance"]))
             vs_by_key[k] = r
 
@@ -142,7 +182,7 @@ def main() -> None:
     if args.human_jsonl and args.human_jsonl.exists():
         long_rows.extend(load_human_jsonl(args.human_jsonl))
 
-    args.out.parent.mkdir(parents=True, exist_ok=True)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     fields = [
         "model_id",
         "experiment",
@@ -155,12 +195,12 @@ def main() -> None:
         "bet_0_100",
         "alpha_hat",
     ]
-    with args.out.open("w", encoding="utf-8", newline="") as f:
+    with out_path.open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         w.writerows(long_rows)
 
-    print(f"Wrote {len(long_rows)} rows -> {args.out}")
+    print(f"Wrote {len(long_rows)} rows -> {out_path}")
 
 
 if __name__ == "__main__":

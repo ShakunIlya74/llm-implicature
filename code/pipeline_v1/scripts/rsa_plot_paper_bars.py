@@ -5,9 +5,9 @@ access and utterance. Multiple series (LLM bets, RSA, logprobs, optional human)
 are dodged in each panel.
 
 Usage (from repo root):
-  py -3 code/pipeline_v1/scripts/rsa_plot_paper_bars.py \\
-    --csv results/rsa_plots/rsa_long_combined.csv \\
-    --out-dir results/rsa_plots/figures
+  py -3 code/pipeline_v1/scripts/rsa_plot_paper_bars.py
+
+Defaults: results/rsa_plots/rsa_long_combined.csv and results/rsa_plots/figures_bar/
 
 Caption note: human rows (if any) use paper-style digitized posteriors; LLM rows are
 aggregated as in rsa_probe (trial-level knowledge filter from the paper is not applied).
@@ -22,6 +22,10 @@ import csv
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[3]
 
 # matplotlib imported inside main paths to allow --help without dependency
 
@@ -269,8 +273,17 @@ def run_plotting(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="RSA long CSV -> paper-style bar plots")
-    parser.add_argument("--csv", type=Path, required=True)
-    parser.add_argument("--out-dir", type=Path, required=True)
+    root = _repo_root()
+    parser.add_argument(
+        "--csv",
+        type=Path,
+        default=root / "results" / "rsa_plots" / "rsa_long_combined.csv",
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=root / "results" / "rsa_plots" / "figures_bar",
+    )
     args = parser.parse_args()
     run_plotting(args)
 

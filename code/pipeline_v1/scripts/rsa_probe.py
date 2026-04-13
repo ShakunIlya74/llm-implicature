@@ -346,6 +346,7 @@ def main() -> None:
     if not rows:
         raise SystemExit("No usable rows found under data root.")
 
+    # Strict: only structured bet rows marked valid by upstream (e.g. bets sum to 100).
     bets_rows = [r for r in rows if r["source"] == "bets" and r.get("valid")]
     log_rows = [r for r in rows if r["source"] == "logprobs" and r.get("valid")]
 

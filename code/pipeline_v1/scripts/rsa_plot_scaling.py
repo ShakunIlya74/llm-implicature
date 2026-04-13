@@ -5,11 +5,9 @@ metrics per (model_id, experiment), joins param count, writes a summary CSV and
 matplotlib figures (log-scale x-axis where appropriate).
 
 Usage (from repo root):
-  py -3 code/pipeline_v1/scripts/rsa_plot_scaling.py \\
-    --vs-behavior results/rsa_results/20260413-231950/rsa_vs_behavior.jsonl \\
-    --alpha-fits results/rsa_results/20260413-231950/rsa_alpha_fits.jsonl \\
-    --out-csv results/rsa_plots/rsa_scaling_summary.csv \\
-    --out-dir results/rsa_plots/figures_scaling
+  py -3 code/pipeline_v1/scripts/rsa_plot_scaling.py
+
+Omit paths to use the newest results/rsa_results/<run>/ and write under results/rsa_plots/.
 
 Param sizes: explicit map for known checkpoints in this repo; otherwise regex on
 the HuggingFace-style id. Cross-architecture comparisons are indicative only.
@@ -26,6 +24,25 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
+def _latest_rsa_run_dir() -> Path:
+    base = _repo_root() / "results" / "rsa_results"
+    candidates = sorted(
+        base.glob("*/rsa_predictions.jsonl"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not candidates:
+        raise SystemExit(
+            f"No rsa_predictions.jsonl under {base}; run rsa_probe.py first."
+        )
+    return candidates[0].parent
+
+
 # Approximate size in billions (active params); extend when adding models.
 PARAM_BILLIONS_BY_ID: dict[str, float] = {
     "Qwen--Qwen3.5-0.8B": 0.8,
@@ -37,6 +54,7 @@ PARAM_BILLIONS_BY_ID: dict[str, float] = {
     "meta-llama--Llama-3.1-8B-Instruct": 8.0,
     "microsoft--Phi-4-mini-instruct": 3.8,
     "google--gemma-3-4b-it": 4.0,
+    "google--gemma-3-1b-it": 1.0,
 }
 
 _PARAM_RE = re.compile(
@@ -298,21 +316,52 @@ def plot_scaling(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="RSA metrics vs model parameter scaling")
-    parser.add_argument("--vs-behavior", type=Path, required=True)
-    parser.add_argument("--alpha-fits", type=Path, default=None)
-    parser.add_argument("--out-csv", type=Path, required=True)
-    parser.add_argument("--out-dir", type=Path, required=True)
+    parser.add_argument(
+        "--vs-behavior",
+        type=Path,
+        default=None,
+        help="rsa_vs_behavior.jsonl (default: newest under results/rsa_results/)",
+    )
+    parser.add_argument(
+        "--alpha-fits",
+        type=Path,
+        default=None,
+        help="rsa_alpha_fits.jsonl (default: same run as vs-behavior)",
+    )
+    parser.add_argument(
+        "--out-csv",
+        type=Path,
+        default=None,
+        help="Summary CSV (default: results/rsa_plots/rsa_scaling_summary.csv)",
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=None,
+        help="Figures dir (default: results/rsa_plots/figures_scaling)",
+    )
     args = parser.parse_args()
 
-    vs_rows = read_jsonl(args.vs_behavior)
-    alpha_rows = read_jsonl(args.alpha_fits) if args.alpha_fits and args.alpha_fits.exists() else None
+    run_dir = _latest_rsa_run_dir()
+    vs_path = args.vs_behavior or (run_dir / "rsa_vs_behavior.jsonl")
+    alpha_path = (
+        args.alpha_fits if args.alpha_fits is not None else (run_dir / "rsa_alpha_fits.jsonl")
+    )
+    out_csv = args.out_csv or (_repo_root() / "results" / "rsa_plots" / "rsa_scaling_summary.csv")
+    out_dir = args.out_dir or (_repo_root() / "results" / "rsa_plots" / "figures_scaling")
+
+    if not vs_path.exists():
+        raise SystemExit(f"Missing vs-behavior file: {vs_path}")
+
+    vs_rows = read_jsonl(vs_path)
+    alpha_rows = read_jsonl(alpha_path) if alpha_path.exists() else None
 
     summary = build_summary(vs_rows, alpha_rows)
-    write_summary_csv(args.out_csv, summary)
-    print(f"Wrote {len(summary)} rows -> {args.out_csv}")
+    write_summary_csv(out_csv, summary)
+    print(f"Wrote {len(summary)} rows -> {out_csv}")
 
-    plot_scaling(summary, args.out_dir)
-    print(f"Wrote scaling figures -> {args.out_dir}")
+    plot_scaling(summary, out_dir)
+    print(f"Wrote scaling figures -> {out_dir}")
     print("Exploratory correlation (mixed architectures; interpret cautiously):")
     print_scaling_correlations(summary)
 
