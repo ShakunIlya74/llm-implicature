@@ -18,7 +18,7 @@ import os
 import sys
 
 from llm_utils.inference import InferenceClient
-from llm_utils.prompts import METHODS
+from llm_utils.prompts import METHODS, PROMPT_BUILDERS
 from llm_utils.vllm_server import start_vllm_server, stop_vllm_server, wait_for_vllm
 from exps_some import run_some_experiment
 from exps_numerical import run_numerical_experiment
@@ -33,10 +33,10 @@ LOCAL_MODELS = [
     # "Qwen/Qwen3.5-0.8B",
     # "Qwen/Qwen3.5-4B",
     # "Qwen/Qwen3.5-2B",
-    "Qwen/Qwen3.5-9B",  
+    # "Qwen/Qwen3.5-9B",  
     # llamas
     # "meta-llama/Llama-3.2-3B-Instruct",
-    # "meta-llama/Llama-3.1-8B-Instruct", 
+    "meta-llama/Llama-3.1-8B-Instruct", 
     # phi
     "microsoft/Phi-4-mini-instruct",
     # Gemmas
@@ -71,6 +71,26 @@ API_METHODS = [  # prefilling not available for API models
     "ftp_logprobs_single",
 ]
 
+
+def _resolve_methods(
+    requested: list[str] | None,
+    version: str,
+    allowed: list[str],
+) -> list[str]:
+    """Return methods to run for a given version.
+
+    Defaults to whatever is defined in PROMPT_BUILDERS[version]; if explicit
+    methods are requested, filters to the intersection with both the version
+    definition and the allowed list (e.g. no prefilling for API models).
+    """
+    version_methods = list(PROMPT_BUILDERS.get(version, {}).keys())
+    candidates = requested or version_methods
+    result = [m for m in candidates if m in version_methods and m in allowed]
+    skipped = [m for m in candidates if m not in result]
+    if skipped:
+        print(f"  Skipping methods not defined for version '{version}': {skipped}")
+    return result
+
 # Experiment registry
 EXPERIMENT_RUNNERS = {
     "exps_some": run_some_experiment,
@@ -95,7 +115,7 @@ def run_local_models(
     and methods, then shuts down before loading the next model.
     """
     models = models or LOCAL_MODELS
-    methods = methods or ALL_METHODS
+    methods = _resolve_methods(methods, version, ALL_METHODS)
     experiments = experiments or list(EXPERIMENT_RUNNERS.keys())
     base_url = f"http://127.0.0.1:{port}/v1"
 
@@ -152,7 +172,7 @@ def run_api_models(
     is not set.
     """
     models = models or API_MODELS
-    methods = methods or API_METHODS
+    methods = _resolve_methods(methods, version, API_METHODS)
     experiments = experiments or list(EXPERIMENT_RUNNERS.keys())
 
     for model_cfg in models:

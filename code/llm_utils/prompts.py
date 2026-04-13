@@ -351,6 +351,48 @@ def build_ftp_single_prompt(
     return {"messages": messages, "input_text": _serialize_input(messages=messages)}
 
 
+# Method: FTP Log Probs - Single Output v2
+
+_FTP_SINGLE_SYSTEM_V2 = (
+    "You are a single-character response assistant. "
+    "Your response must consist of exactly one character from the valid options. "
+    "Do not add reasoning, thinking, punctuation, spaces, or any other text."
+)
+
+_FTP_COUNT_INST_V2 = "Respond with exactly one character: 0, 1, 2, or 3. Nothing else."
+
+_FTP_KNOWLEDGE_INST_V2 = "Respond with exactly one character: Y or N. Nothing else."
+
+
+def build_ftp_single_prompt_v2(
+    story: dict, condition: dict, question_key: str
+) -> dict[str, Any]:
+    """Build messages for FTP single-token output method v2.
+
+    Adds a system message and tighter instruction to prevent larger/thinking
+    models from emitting preamble tokens (e.g. 'Thinking...') before the answer.
+    """
+    if question_key == "prior":
+        context = story["setup"]
+        question = story["prior_q"]
+        instruction = _FTP_COUNT_INST_V2
+    elif question_key == "posterior":
+        context = story["setup"] + "\n\n" + render_utterance(story, condition)
+        question = story["posterior_q"]
+        instruction = _FTP_COUNT_INST_V2
+    else:
+        context = story["setup"] + "\n\n" + render_utterance(story, condition)
+        question = story["knowledge_q"]
+        instruction = _FTP_KNOWLEDGE_INST_V2
+
+    user_content = f"{context}\n\n{question}\n\n{instruction}"
+    messages = [
+        {"role": "system", "content": _FTP_SINGLE_SYSTEM_V2},
+        {"role": "user", "content": user_content},
+    ]
+    return {"messages": messages, "input_text": _serialize_input(messages=messages)}
+
+
 # Method: FTP Log Probs - Prefilling attack trick
 
 CHAT_TEMPLATES = {
@@ -434,12 +476,69 @@ def build_prefilling_prompt(
     return {"prompt": raw_prompt, "input_text": _serialize_input(prompt=raw_prompt)}
 
 
+# Method: FTP Log Probs - Prefilling attack trick v2
+
+
+def build_prefilling_prompt_v2(
+    story: dict,
+    condition: dict,
+    question_key: str,
+    model_name: str,
+) -> dict[str, Any]:
+    """Build raw prompt for FTP prefilling attack v2.
+
+    Identical to v1 except the assistant prefix ends with a trailing space so
+    that the model's first generated token is the bare answer character (e.g.
+    '3' or 'N') rather than a leading-space token.  In v1, the prefix ends
+    with a colon and the model emits ' ' (space) as its first token, scattering
+    log-prob mass across ' **', ' \\n\\n', etc. instead of the answer digits.
+    """
+    if question_key == "prior":
+        context = story["setup"]
+        question = story["prior_q"]
+        instruction = _FTP_COUNT_INST
+        options = "0, 1, 2, or 3"
+    elif question_key == "posterior":
+        context = story["setup"] + "\n\n" + render_utterance(story, condition)
+        question = story["posterior_q"]
+        instruction = _FTP_COUNT_INST
+        options = "0, 1, 2, or 3"
+    else:
+        context = story["setup"] + "\n\n" + render_utterance(story, condition)
+        question = story["knowledge_q"]
+        instruction = _FTP_KNOWLEDGE_INST
+        options = "Y or N"
+
+    user_content = f"{context}\n\n{question}\n\n{instruction}"
+    # Trailing space forces the first generated token to be the bare answer
+    # character, bypassing leading-space tokens and markdown formatting tokens.
+    assistant_prefix = (
+        f"Given the question and the possible answers ({options}), my answer is: "
+    )
+
+    family = detect_model_family(model_name)
+    tpl = CHAT_TEMPLATES[family]
+
+    raw_prompt = (
+        f"{tpl['bos']}"
+        f"{tpl['user_start']}{user_content}{tpl['user_end']}"
+        f"{tpl['assistant_start']}{assistant_prefix}"
+    )
+
+    return {"prompt": raw_prompt, "input_text": _serialize_input(prompt=raw_prompt)}
+
 
 PROMPT_BUILDERS: dict[str, dict[str, Any]] = {
     "prompting-v1": {
         "structured_output": build_structured_prompt,
-        "natural_language": build_natural_prompt,
-        "ftp_logprobs_single": build_ftp_single_prompt,
-        "ftp_logprobs_prefilling": build_prefilling_prompt,
+        # "natural_language": build_natural_prompt,
+        # "ftp_logprobs_single": build_ftp_single_prompt,
+        # "ftp_logprobs_prefilling": build_prefilling_prompt,
+    },
+    "prompting-v2": {
+        # "structured_output": build_structured_prompt,
+        # "natural_language": build_natural_prompt,
+        "ftp_logprobs_single": build_ftp_single_prompt_v2,
+        "ftp_logprobs_prefilling": build_prefilling_prompt_v2,
     },
 }
