@@ -1,0 +1,564 @@
+\documentclass[11pt]{article}
+\usepackage[final]{acl}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{enumitem}
+%\usepackage{placeins}
+
+%\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+%\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+%\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+%\setlength{\abovecaptionskip}{4pt}
+%\setlength{\belowcaptionskip}{2pt}
+
+\title{Reverse-Engineering Scalar Implicatures in Language Models:\\
+A Rational Speech Act Analysis of Speaker Knowledge Effects}
+\author{Jingyu Han, Illia Shakun, Yankı Öztürk, Lukas Viestädt \\
+\textit{Modeling Agents} (WS2025/26) \\ University of Tübingen}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Following \citet{goodmanstuhlmuller2013}, we probe scalar and number-word understanding in large language models using structured betting, comparing posteriors to first-token log-probability distributions and RSA$_1$ reconstructions ($\alpha\in[0.1,8.0]$ by grid search minimizing KL from bets to RSA; \texttt{rsa\_probe.py}). Run \texttt{20260414-005924} yields $81$ matched posterior cells with mean $\mathrm{KL}(P_{\text{bets}}\Vert P_{\text{logprob}}){=}0.80$ (SD $0.63$) and MAE $0.22$. For Qwen3.5, mean $\mathrm{KL}(P_{\text{bets}}\Vert P_{\text{RSA}})$ on \emph{some} falls from $11.3$ (0.8B) to $0.20$ (9B), while number-word conditions are non-monotonic. Overall, modalities disagree and RSA alignment is selective; RSA is a useful consistency diagnostic, not a universal sufficient model, pending full factorial runs and digitized human alignment.
+\end{abstract}
+
+\section{Introduction}
+\label{Introduction}
+
+The success of communication in a language depends on the ability of its users both to contextually choose between utterance alternatives, and to contextually arrive at interpretations of observed utterances. Probabilistic pragmatics treats this recursive reasoning about the other as a fundamentally probabilistic process, and aims to make quantitative predictions about it. 
+
+One of the most influential probabilistic approaches to the study of meaning is the Rational Speech Act (RSA) \cite{goodmanfrank2016}. RSA has been particularly useful in understanding, among many others, the linguistic phenomenon of implicature. \textit{Scalar implicature}, in particular, is amenable to empirical investigation because of the wide-scale agreement between its theoretical accounts \cite{katsoscummins2010}.
+
+In this paper, we ask whether large language models (LLMs) exhibit human-like understanding of scalar implicature and whether their internal components are consistent with human cognition under the RSA framework. We replicate and extend the experimental paradigm of Goodman \& Stuhlmüller \cite{goodmanstuhlmuller2013} to LLMs, and assess their behavior in comparison with results from human experiments. Section \ref{Background} presents an overview of the theoretical basis and related works. Section \ref{System} describes in detail our approach to the task. Finally, we discuss our findings and draw conclusions in Sections \ref{Results} and \ref{Discussion}.
+
+\section{Background}
+\label{Background}
+
+\subsection{Implicature}
+\textit{Conversational implicature}, as described by Paul Grice \cite{grice1975}, assumes the observance of a set of \textit{maxims of conversation} and a \textit{cooperative principle} by the parties in conversation. For example, the maxim of quantity lets speakers maximize the flow of relevant information, by requiring them to make their utterance as informative as is possible or required.
+
+A speaker's perceived inability to make a more informative statement than they actually made results in the hearer deriving a pragmatic inference, that the the speaker is not capable of providing the more informative alternative statement, while remaining cooperative. The following example from Degen \cite{degen2023} illustrates scalar implicature: that if a speaker chooses to produce the utterance in (1), he must have chosen to not produce the stronger alternative of (3), because the intention was to implicate (2):
+
+\setlist{nolistsep}
+\begin{itemize}[noitemsep]
+    \item[(1)] Alex ate some of the cookies.
+    \item[(2)] Alex ate some, but not all, of the cookies.
+    \item[(3)] Alex ate all of the cookies.
+\end{itemize}
+
+\subsection{Probabilistic pragmatics and Rational Speech Act}
+Following Grice, probabilistic pragmatics is interested in explaining pragmatic phenomena by referring to our goal-oriented and optimality-focused behavior in communication \cite{frankejaeger2016}. It is characterized by its strongly computational and data-driven methodology, which takes different perspectives speakers and listeners can have on the relevant contextual parameters into account, and uses probability calculus to describe inferences under these conversational uncertainties.
+
+One of the most influential frameworks of the research program of probabilistic pragmatics is the Rational Speech Act (RSA) introduced by Goodman and Frank \cite{goodmanfrank2016}. The RSA model aims to formalize the Gricean notion of implicature by replacing its maxims of conversation with a utility-theoretic version of the
+cooperative principle. RSA models consist of literal listeners, and pragmatic speakers inferring the speaker's intended communicative goal under the assumption that the speaker is rational. The pragmatic listener infers the state of the world \textit{w} by Bayes' rule, given the observation of a particular utterance \textit{u}:
+\[
+P_{L}(w\mid u)\propto P_{S}(u\mid w)P(w)
+\]
+
+\subsection{Quantifier understanding in LLMs}
+Past research on how well language models understand meanings of quantifiers have consistently found that LLMs deal poorly with quantifiers. Pezzele et al. \cite{pezzelle2018} report that language models struggle to predict which quantifier is used in a given context, and model performance suffers in conditions that enhance human performance. Kalouli et al. \cite{kalouli2022} find that they also perform poorly when generating appropriate continuations to logical quantifiers. Michaelov and Bergen \cite{michaelovbergen2023} categorize of quantifiers based on use frequency in language, and find that models perform poorly on statistically rarer quantifiers, as well as inverse scaling, where bigger models struggle more with predicting quantifiers. 
+
+\section{Methodology}
+\label{System}
+
+\subsection{Design and stimuli (Phase~A)}
+
+Let $\mathcal{S}$ be the set of short scenarios ($|\mathcal{S}|=6$), $\mathcal{K}=\{1,2,3\}$ the speaker-access levels, $\mathcal{U}_q=\{\texttt{none},\texttt{some},\texttt{all}\}$ the quantifier utterances, $\mathcal{R}$ the prompt-strategy set ($|\mathcal{R}|=3$), $\mathcal{P}$ the paraphrase set ($|\mathcal{P}|=5$), and $\mathcal{Q}=\{\texttt{prior},\texttt{posterior},\texttt{knowledge}\}$. A quantifier-condition cell is an index tuple
+\[
+i=(s,k,u,r,p,q)\in \mathcal{S}\times\mathcal{K}\times\mathcal{U}_q\times\mathcal{R}\times\mathcal{P}\times\mathcal{Q}.
+\]
+Hence the quantifier block size is
+\[
+|\mathcal{S}||\mathcal{K}||\mathcal{U}_q||\mathcal{R}||\mathcal{P}||\mathcal{Q}|=6\times3\times3\times3\times5\times3=2430.
+\]
+The latent world state is the count space $\Omega=\{0,1,2,3\}$. An optional numeral block replaces $\mathcal{U}_q$ by six fixed $(k,\text{observe})$ conditions, yielding $6\times6\times3\times5\times3=1620$ additional rows.
+
+\begin{table}[H]
+
+  \centering
+
+  \footnotesize
+
+  \setlength{\tabcolsep}{3pt}
+
+  \renewcommand{\arraystretch}{0.92}
+
+  \begin{tabularx}{\linewidth}{@{}lX@{}}
+
+    \toprule
+
+    \textbf{Factor} & \textbf{Levels} \\
+
+    \midrule
+
+    Short stories & $|\mathcal{S}|=6$ \\
+
+    Speaker access ($k$) & $\mathcal{K}=\{1,2,3\}$ \\
+
+    Quantifiers & $\mathcal{U}_q=\{\texttt{none},\texttt{some},\texttt{all}\}$ \\
+
+    Prompt strategies & $|\mathcal{R}|=3$ \\
+
+    Paraphrase prefixes & $|\mathcal{P}|=5$ \\
+
+    Question types & $\mathcal{Q}=\{\texttt{prior},\texttt{posterior},\texttt{knowledge}\}$ \\
+
+    \bottomrule
+
+  \end{tabularx}
+
+  \caption{Phase~A quantifier-grid factors (full cross-product per row).}
+
+  \label{tab:experimental_design}
+
+\end{table}
+
+
+
+Each row instantiates $(i,\Omega)$ and stores context text, utterance identity, access level, question type, and metadata for reproducible stratified analysis. Stimulus generation is deterministic (no stochastic model calls).
+
+
+
+\subsection{Prompt contract and messages}
+
+For each condition $i$, the model input is a templated message tuple
+\[
+x_i=(\sigma_r,\;c_s,\;a_{u,k},\;q),
+\]
+where $\sigma_r$ is strategy-dependent instruction text, $c_s$ is scenario context, $a_{u,k}$ is the utterance block (included for posterior/knowledge questions), and $q\in\mathcal{Q}$ is the queried belief type. The protocol fixes a betting interpretation so outputs can be mapped to normalized distributions.
+
+
+
+\subsection{Inference backend and run records}
+
+Given model $m$ and condition $i$, generation produces a response sample $y_{m,i}$. Decoding uses low-temperature sampling with bounded output length and batched parallel execution. Each run is archived with configuration metadata and raw responses for complete provenance.
+
+\begin{table}[t]
+
+  \centering
+
+  \footnotesize
+
+  \setlength{\tabcolsep}{3pt}
+
+  \renewcommand{\arraystretch}{0.92}
+
+  \begin{tabularx}{\linewidth}{@{}lX@{}}
+
+    \toprule
+
+    \textbf{Setting} & \textbf{Default} \\
+
+    \midrule
+
+    API endpoint credentials & environment-provided keys \\
+
+    \texttt{temperature} & $0.2$ \\
+
+    \texttt{max\_tokens} & $256$ \\
+
+    Concurrency & 15 parallel workers (default) \\
+
+    \bottomrule
+
+  \end{tabularx}
+
+  \caption{Default generation hyperparameters for Phase~A inference.}
+
+  \label{tab:inference_defaults}
+
+\end{table}
+
+
+
+\subsection{Parsing and behavioral summaries}
+
+Responses are parsed into probability vectors. For count questions, we obtain $p\in\Delta(\Omega)$ with $\sum_{s\in\Omega}p(s)=1$; for knowledge questions, we obtain $p\in\Delta(\{\texttt{yes},\texttt{no}\})$. Invalid parses are excluded by schema and normalization checks. Condition-level summaries are computed by averaging valid distributions within identical design keys.
+
+
+
+\subsection{Unified records for RSA probing}
+
+To compare elicitation modalities, we build a unified panel indexed by
+\[
+\kappa=(m,e,k,u,q),
+\]
+where $m$ is model, $e$ experiment block, $k$ access level, $u$ utterance category, and $q$ question type. Let $\mathcal{D}_\kappa$ be valid draws under a fixed modality (bets or log-probs). The aggregated distribution is
+\[
+\bar p_\kappa=\frac{1}{|\mathcal{D}_\kappa|}\sum_{d\in\mathcal{D}_\kappa}p_d.
+\]
+This yields directly comparable posterior estimates for cross-modal diagnostics.
+
+
+
+\subsection{RSA listener and $\alpha$ grid search}
+
+For each posterior cell with an available prior, literal utterance likelihood is defined via a hypergeometric observation model. If $x$ is the number of positives in a sample of size $k$ from a world with $s$ positives among $N=3$ objects, then
+{\setlength{\abovedisplayskip}{5pt}\setlength{\belowdisplayskip}{5pt}\setlength{\abovedisplayshortskip}{4pt}\setlength{\belowdisplayshortskip}{4pt}\small
+\begin{equation}
+\label{eq:plithg}
+P_{\mathrm{lit}}(u\mid s,k)=
+\sum_{x=0}^{k}\mathbf{1}\!\left[\phi_u(x)=1\right]
+\frac{\binom{s}{x}\binom{3-s}{k-x}}{\binom{3}{k}},
+\end{equation}
+\begin{equation}
+\label{eq:speaker}
+P_S(u\mid s,k;\alpha)=
+\frac{\exp\!\big(\alpha\log(P_{\mathrm{lit}}(u\mid s,k)+\varepsilon)\big)}
+{\sum_{u'\in\mathcal{U}(u)}\exp\!\big(\alpha\log(P_{\mathrm{lit}}(u'\mid s,k)+\varepsilon)\big)},
+\end{equation}
+\begin{equation}
+\label{eq:listener}
+P_{\mathrm{RSA}}(s\mid u,k;\alpha)=
+\frac{P(s)\,P_S(u\mid s,k;\alpha)}
+{\sum_{s'\in\Omega}P(s')\,P_S(u\mid s',k;\alpha)},
+\end{equation}
+\begin{equation}
+\label{eq:alphaobj}
+\hat\alpha=\arg\min_{\alpha\in\mathcal{A}}
+\mathrm{KL}\!\left(P_{\mathrm{bets}}(\cdot\mid u,k)\,\Vert\,
+P_{\mathrm{RSA}}(\cdot\mid u,k;\alpha)\right),
+\end{equation}
+\normalsize
+where $\phi_u$ is the utterance-compatibility function, $\mathcal{U}(u)$ is the relevant alternative set (quantifier or numeral class), $\varepsilon>0$ is a numerical floor, and $\mathcal{A}=\{0.1,0.2,\dots,8.0\}$.
+
+
+
+
+\subsection{Exploratory summaries and figures}
+
+Exploratory analyses report per-model and per-block summaries of (i) cross-modal divergence between bets and log-prob posteriors, (ii) fitted rationality parameters, and (iii) residual structure between observed and RSA-reconstructed posteriors. Unless noted otherwise, reported means are unweighted averages over posterior cells.
+
+
+
+\subsection{Hypotheses and metrics (proposal alignment)}
+
+\textbf{O1} (emergent rationality): increasing model capability should reduce divergence to human aggregate behavior and increase internal coherence across probes (bets, log-probs, RSA). \textbf{O2} (prompt independence): stronger models should exhibit lower between-strategy variance under fixed semantic conditions.
+
+Primary metrics are
+\begin{equation}
+\mathrm{KL}(p,q)=\sum_{s\in\Omega}p(s)\log\frac{p(s)}{q(s)}.
+\end{equation}
+\begin{equation}
+\mathrm{MAE}(p,q)=\frac{1}{|\Omega|}\sum_{s\in\Omega}|p(s)-q(s)|.
+\end{equation}
+\begin{equation}
+\|p-q\|_2=\sqrt{\sum_{s\in\Omega}(p(s)-q(s))^2}.
+\end{equation}
+plus boundary-hit rates for $\hat\alpha$ at $\min(\mathcal{A})$ and $\max(\mathcal{A})$ as an identifiability diagnostic.
+
+
+
+\subsection{Materials and replication}
+
+\noindent\begingroup
+
+\setlength{\fboxsep}{5pt}\setlength{\fboxrule}{0.6pt}
+
+\fcolorbox{blue!55!black}{gray!9}{%
+
+\begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule}
+
+\textbf{Materials and replication.}\par\smallskip
+
+Canonical code, configurations, analyzed assets, and figure outputs are publicly available at \url{https://github.com/ShakunIlya74/llm-implicature}.
+
+\textbf{Environment:} a reproducible Conda/Python setup with pinned dependencies.
+
+\textbf{Workflow:} deterministic stimulus construction, batched model inference, distribution normalization, RSA fitting, and post-hoc exploratory aggregation.
+
+\end{minipage}%
+
+}\endgroup
+
+
+
+\section{Results and Analysis}
+
+\label{Results}
+
+We evaluate a consolidated posterior panel (run \texttt{20260414-005924}) across three representational layers: elicited betting posteriors, token-level log-probability probes, and RSA reconstructions parameterized by $\hat\alpha$. All summaries below are condition-level averages on matched cells unless otherwise noted.
+
+\subsection{Cross-modal agreement: bets vs.\ log-probs}
+
+\begin{table}[t]
+
+  \centering
+
+  \footnotesize
+
+  \setlength{\tabcolsep}{3pt}
+
+  \renewcommand{\arraystretch}{0.92}
+
+  \begin{tabularx}{\linewidth}{@{}Xcc@{}}
+
+    \toprule
+
+    Summary (run \texttt{20260414-005924}) & Mean & SD \\
+
+    \midrule
+
+    $\mathrm{KL}(P_{\text{bets}}\Vert P_{\text{logprob}})$ over cells & $0.80$ & $0.63$ \\
+
+    $\mathrm{MAE}(P_{\text{bets}}, P_{\text{logprob}})$ over cells & $0.22$ & $0.104$ \\
+
+    \bottomrule
+
+  \end{tabularx}
+
+  \caption{Global agreement between betting and log-probability posteriors ($81$ analyzed cells).}
+
+  \label{tab:global}
+
+\end{table}
+
+Table~\ref{tab:global} shows clear non-zero divergence between elicited and token-level posteriors, indicating that the two probes are informative but not interchangeable. Dispersion is substantial across models and blocks: in \texttt{exps\_some}, mean $\mathrm{KL}(P_{\text{bets}}\Vert P_{\text{logprob}})$ spans $0.067$ to $1.617$, and in \texttt{exps\_numerical} it spans $0.071$ to $1.605$.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{results/exploratory_rsa/01_bets_logprob/summary_plot.png}
+  \caption{Model-wise agreement between betting and log-probability posteriors for scalar (\texttt{exps\_some}) and numeral (\texttt{exps\_numerical}) blocks. Top row: mean KL; bottom row: mean MAE.}
+  \label{fig:bets_logprob_summary}
+\end{figure*}
+
+Figure~\ref{fig:bets_logprob_summary} further demonstrates block-specific behavior: agreement profiles in scalar conditions do not reliably transfer to numeral conditions. This pattern argues against treating cross-modal coherence as a single global model attribute.
+
+\subsection{RSA fit quality and identifiability of $\alpha$}
+
+RSA fit quality varies by more than two orders of magnitude across model$\times$block cells. Table~\ref{tab:rsa_extremes} summarizes representative best/worst cases. In both blocks, error concentration is driven by a small set of high-divergence checkpoints, while several models achieve low KL despite different parameter scales.
+
+\begin{table}[t]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{0.92}
+  \begin{tabularx}{\linewidth}{@{}lXc@{}}
+    \toprule
+    Block & Model (representative case) & $\mathrm{KL}(P_{\text{bets}}\Vert P_{\text{RSA}})$ \\
+    \midrule
+    \texttt{exps\_some} (best) & Phi-4-mini-instruct & 0.083 \\
+    \texttt{exps\_some} (worst) & Qwen3.5-0.8B & 11.297 \\
+    \texttt{exps\_numerical} (best) & Gemini Flash Lite & 0.217 \\
+    \texttt{exps\_numerical} (worst) & Llama-3.2-3B-Instruct & 10.477 \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Representative extremes of RSA reconstruction error across blocks.}
+  \label{tab:rsa_extremes}
+\end{table}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{results/exploratory_rsa/02_alpha_fit/summary_plot.png}
+  \caption{RSA $\alpha$ diagnostics by experiment block. Top row: fraction of cells at the minimum and maximum grid boundary. Bottom row: mean objective value $\mathrm{KL}(P_{\text{bets}}\Vert P_{\text{RSA}})$ at fitted $\hat\alpha$.}
+  \label{fig:alpha_summary}
+\end{figure*}
+
+Figure~\ref{fig:alpha_summary} indicates boundary-heavy optimization in the $\alpha$ search. The concentration of solutions near grid limits implies limited interior identifiability for many cells, constraining strong parameter-interpretability claims.
+
+\begin{table}[t]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{0.92}
+  \begin{tabularx}{\linewidth}{@{}Xc@{}}
+    \toprule
+    Diagnostic & Value \\
+    \midrule
+    Mean rate at $\alpha_{\min}$ (across model$\times$block rows) & 0.743 \\
+    Mean rate at $\alpha_{\max}$ (across model$\times$block rows) & 0.069 \\
+    Rows with all cells at $\alpha_{\min}$ & 13 / 24 \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Boundary diagnostics for $\hat\alpha$ fits.}
+  \label{tab:alpha_diagnostics}
+\end{table}
+
+Residual norms corroborate this diagnosis: mean $\ell_2$ residuals are minimal for Llama-3.1-8B on \texttt{exps\_some} ($0.039$) and largest in hard cases such as Qwen-0.8B on \texttt{exps\_some} ($0.520$) and Llama-3.2-3B on \texttt{exps\_numerical} ($0.519$).
+
+\subsection{Scaling patterns across model families}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{results/rsa_plots/figures_scaling/rsa_scaling_metrics_vs_params.png}
+  \caption{Scaling trends of elicitation and RSA metrics versus model size (log-scale x-axis). Colors indicate model families and labels indicate checkpoints.}
+  \label{fig:scaling_metrics}
+\end{figure*}
+
+Scaling is heterogeneous and family-contingent (Figure~\ref{fig:scaling_metrics}). Within Qwen, scalar-block RSA fit improves with size ($11.30 \rightarrow 0.42 \rightarrow 0.31 \rightarrow 0.20$ from 0.8B to 9B), whereas numeral performance is non-monotonic ($5.61 \rightarrow 0.54 \rightarrow 2.80 \rightarrow 0.55$). Cross-family comparisons reveal architecture effects that are not reducible to parameter count alone; in particular, some mid-scale checkpoints (e.g., Phi-4-mini) outperform larger models on scalar RSA fit. This pattern is consistent with broader benchmark evidence that capability gains are often uneven across tasks and scales \cite{srivastava2023beyond}.
+
+Overall, the evidence supports a \emph{family-conditional} scaling account rather than a universal monotonic size law for pragmatic alignment.
+
+\subsection{Interpretation with respect to objectives}
+
+For \textbf{O1} (emergent rationality), support is partial: local monotonic improvement is visible within selected families, but global monotonicity across architectures is not observed. For \textbf{O2} (prompt independence), the current aggregate does not isolate strategy interactions strongly enough for a definitive inference.
+
+\section{Discussion}
+
+\label{Discussion}
+
+The analysis contributes both methodologically and empirically. Methodologically, it provides a unified probabilistic comparison space linking elicited posteriors, token-level probes, and RSA reconstructions under shared condition keys. Empirically, it identifies persistent modality gaps and frequent boundary solutions in $\alpha$ fitting, indicating that pragmatic coherence is uneven across models and tasks.
+
+Two limitations remain central. First, missing matched log-probability outputs for selected endpoints reduce statistical power in three-way comparisons. Second, boundary-dominated $\hat\alpha$ estimates indicate that stronger identifiability diagnostics (e.g., denser grids, alternative utility forms, or profile-likelihood checks) are required before assigning strong cognitive meaning to fitted rationality parameters.
+
+\noindent\begingroup
+\setlength{\fboxsep}{5pt}\setlength{\fboxrule}{0.6pt}
+\fcolorbox{blue!55!black}{gray!9}{%
+\begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule}
+\textbf{Discussion summary.}\par\smallskip
+\textbf{Empirical takeaway:} cross-modal coherence and RSA fit quality are highly model- and block-dependent, with no universal monotonic scaling law. \\
+\textbf{Interpretive caution:} high rates of boundary solutions in $\hat\alpha$ limit parameter-level cognitive interpretation. \\
+\textbf{Next steps:} (i) strategy-stratified full-factorial analysis for a direct O2 test; (ii) tighter coupling to digitized human aggregates for explicit human--model divergence estimation; and (iii) RSA robustness analyses over priors, alternative sets, and optimization specifications.
+\end{minipage}%
+}\endgroup
+
+
+
+\section*{Acknowledgments}
+
+We thank the Modeling Agents course staff for the project framing. Parts of the manuscript were drafted with AI-assisted editing tools; numerical claims were checked against repository CSVs/JSONL.
+
+\bibliography{custom}
+
+
+
+\clearpage
+\onecolumn
+\appendix
+
+
+
+\section{Appendix: per-model probe means}
+
+\label{sec:appendix}
+
+
+
+Table~\ref{tab:fullpanel} reproduces \path{results/rsa_plots/rsa_scaling_summary.csv} (rounded). Block ``some'' denotes \texttt{exps\_some}; ``num'' denotes \texttt{exps\_numerical}. $n$ is the number of aggregated posterior cells entering means for that row. Log-prob columns are ``---'' when the provider bundle lacked matched log-probability posteriors in that summary.
+
+
+
+\begin{table}[t]
+
+  \centering
+
+  \footnotesize
+
+  \setlength{\tabcolsep}{4pt}
+
+  \renewcommand{\arraystretch}{0.92}
+
+  \caption{Per-model mean metrics from \path{results/rsa_plots/rsa_scaling_summary.csv} (rounded to three decimals).}
+
+  \label{tab:fullpanel}
+
+  \begin{tabular}{@{}p{2.6cm}ccccccc@{}}
+
+  \toprule
+
+  Model & Block & $n$ & $\mathrm{KL}_{b,r}$ & MAE$_{b,r}$ & $\bar\alpha$ & $\mathrm{KL}_{b,\ell}$ & MAE$_{b,\ell}$ \\
+
+  \midrule
+
+  Qwen3.5-0.8B & num & 6 & 5.610 & 0.115 & 0.100 & 0.594 & 0.245 \\
+
+  Qwen3.5-0.8B & some & 3 & 11.297 & 0.225 & 0.100 & 0.196 & 0.146 \\
+
+  Qwen3.5-2B & num & 6 & 0.536 & 0.157 & 0.767 & 0.768 & 0.240 \\
+
+  Qwen3.5-2B & some & 3 & 0.417 & 0.151 & 0.833 & 1.254 & 0.329 \\
+
+  Qwen3.5-4B & num & 6 & 2.799 & 0.167 & 0.750 & 1.238 & 0.306 \\
+
+  Qwen3.5-4B & some & 3 & 0.311 & 0.157 & 5.800 & 1.521 & 0.357 \\
+
+  Qwen3.5-9B & num & 6 & 0.549 & 0.121 & 0.767 & 0.437 & 0.167 \\
+
+  Qwen3.5-9B & some & 3 & 0.201 & 0.118 & 5.300 & 0.430 & 0.161 \\
+
+  Gemini Flash Lite & num & 6 & 0.217 & 0.096 & 0.583 & --- & --- \\
+
+  Gemini Flash Lite & some & 3 & 0.172 & 0.115 & 3.133 & --- & --- \\
+
+  Gemma-3-4B-it & num & 6 & 0.476 & 0.168 & 0.100 & 1.605 & 0.242 \\
+
+  Gemma-3-4B-it & some & 3 & 0.166 & 0.084 & 0.100 & 0.721 & 0.194 \\
+
+  GPT-5.4-mini & num & 6 & 0.267 & 0.115 & 0.333 & --- & --- \\
+
+  GPT-5.4-mini & some & 3 & 0.265 & 0.144 & 0.100 & --- & --- \\
+
+  GPT-5.4-nano & num & 6 & 0.263 & 0.130 & 0.350 & --- & --- \\
+
+  GPT-5.4-nano & some & 3 & 0.134 & 0.108 & 2.733 & --- & --- \\
+
+  Llama-3.1-8B-Instruct & num & 6 & 2.935 & 0.057 & 0.100 & 1.107 & 0.292 \\
+
+  Llama-3.1-8B-Instruct & some & 3 & 0.672 & 0.014 & 0.100 & 1.046 & 0.321 \\
+
+  Llama-3.2-1B-Instruct & num & 6 & 0.380 & 0.144 & 0.100 & 0.071 & 0.084 \\
+
+  Llama-3.2-1B-Instruct & some & 3 & 0.386 & 0.151 & 0.100 & 0.067 & 0.084 \\
+
+  Llama-3.2-3B-Instruct & num & 6 & 10.477 & 0.203 & 0.100 & 1.058 & 0.258 \\
+
+  Llama-3.2-3B-Instruct & some & 3 & 6.762 & 0.135 & 0.100 & 1.617 & 0.329 \\
+
+  Phi-4-mini-instruct & num & 6 & 0.515 & 0.152 & 0.100 & 0.325 & 0.140 \\
+
+  Phi-4-mini-instruct & some & 3 & 0.083 & 0.060 & 0.100 & 0.405 & 0.169 \\
+
+  \bottomrule
+
+  \end{tabular}
+
+\end{table}
+
+\subsection{Representative visual diagnostics}
+
+To keep the main text concise, Section~\ref{Results} reports aggregate figures only. Representative per-model plots are shown below.
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{results/rsa_plots/figures/google--gemma-3-4b-it__exps_some.png}
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{results/rsa_plots/figures_bar/Qwen--Qwen3.5-9B__exps_some.png}
+  \end{minipage}
+  \caption{\footnotesize Representative per-model diagnostics from \texttt{figures/} (left) and \texttt{figures\_bar/} (right).}
+  \label{fig:appendix_rep_examples}
+\end{figure}
+\vspace{-6pt}
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[t]{0.52\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{results/rsa_plots/figures_with_human_smoke/google--gemma-3-4b-it__exps_some.png}
+  \end{minipage}
+  \caption{\footnotesize Example from \texttt{figures\_with\_human\_smoke/}, illustrating optional human-reference overlays used for smoke-level checks.}
+  \label{fig:appendix_human_smoke_example}
+\end{figure}
+\vspace{-4pt}
+\noindent\textbf{Full visual outputs.} All generated figures (all models, blocks, and plot styles) are available in the public repository at \url{https://github.com/ShakunIlya74/llm-implicature}, under \path{results/rsa_plots/}.
+
+\end{document}
+
+
