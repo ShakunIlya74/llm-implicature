@@ -201,15 +201,15 @@ across the available outcomes, forcing it to externalize an explicit probability
 \textbf{Prefilled multiple choice (controlled log-prob extraction).} The prompt is prefilled with the
  exact prefix leading up to the answer token, for example \texttt{"The best answer is:"}. This prefilling 
  procedure enforces syntactic compliance and reduces refusals or verbose continuations, allowing clean 
- extraction of log probabilities from the forced-choice token. This method is restricted to local vLLM 
- deployments, because hosted APIs generally do not support prompt prefilling \cite{cappelletti_improving_2025}.
+ extraction of log probabilities from the forced-choice token. \cite{cappelletti_improving_2025} This method is restricted to local vLLM 
+ deployments, because hosted APIs generally do not support prompt prefilling.
 
 
-For the multiple-choice setups, we also control for output-token bias. Prior work shows that conventional
+For the multiple-choice setups, we tried to avoid the output-token bias. Prior work shows that conventional
  labels such as "A, B, C" can induce non-uniform response preferences unrelated to task 
  content \cite{zheng_large_2023}. To reduce this effect, we use single-token answer labels whose 
  semantics are directly tied to the response space. In the scalar-implicature experiments, the answer 
- options are the numerals 0, 1, 2, and 3; for auxiliary yes/no questions, we use Y and N, respectively.
+ options are the numerals 0, 1, 2, and 3. For auxiliary yes/no questions, we use Y and N, respectively.
 
 
 \begin{table}[t]
@@ -396,7 +396,7 @@ Table~\ref{tab:global} shows clear non-zero divergence between elicited and toke
 
 \begin{figure*}[t]
   \centering
-  \safeincludegraphics[width=\textwidth]{results/exploratory_rsa/01_bets_logprob/summary_plot.png}
+  \safeincludegraphics[width=\textwidth]{../results/exploratory_rsa/01_bets_logprob/summary_plot.png}
   \caption{Model-wise agreement between betting and log-probability posteriors for scalar (\texttt{exps\_some}) and numeral (\texttt{exps\_numerical}) blocks. Top row: mean KL; bottom row: mean MAE.}
   \label{fig:bets_logprob_summary}
 \end{figure*}
@@ -428,7 +428,7 @@ RSA fit quality varies by more than two orders of magnitude across model$\times$
 
 \begin{figure*}[t]
   \centering
-  \safeincludegraphics[width=\textwidth]{results/exploratory_rsa/02_alpha_fit/summary_plot.png}
+  \safeincludegraphics[width=\textwidth]{../results/exploratory_rsa/02_alpha_fit/summary_plot.png}
   \caption{RSA $\alpha$ diagnostics by experiment block. Top row: fraction of cells at the minimum and maximum grid boundary. Bottom row: mean objective value $\mathrm{KL}(P_{\text{bets}}\Vert P_{\text{RSA}})$ at fitted $\hat\alpha$.}
   \label{fig:alpha_summary}
 \end{figure*}
@@ -459,7 +459,7 @@ Residual norms corroborate this diagnosis: mean $\ell_2$ residuals are minimal f
 
 \begin{figure*}[t]
   \centering
-  \safeincludegraphics[width=\textwidth]{results/rsa_plots/figures_scaling/rsa_scaling_metrics_vs_params.png}
+  \safeincludegraphics[width=\textwidth]{../results/rsa_plots/figures_scaling/rsa_scaling_metrics_vs_params.png}
   \caption{Scaling trends of elicitation and RSA metrics versus model size (log-scale x-axis). Colors indicate model families and labels indicate checkpoints.}
   \label{fig:scaling_metrics}
 \end{figure*}
@@ -513,7 +513,7 @@ We thank the Modeling Agents course staff for the project framing. Parts of the 
 
 
 
-Table~\ref{tab:fullpanel} reproduces \path{results/rsa_plots/rsa_scaling_summary.csv} (rounded). Block ``some'' denotes \texttt{exps\_some}; ``num'' denotes \texttt{exps\_numerical}. $n$ is the number of aggregated posterior cells entering means for that row. Log-prob columns are ``---'' when the provider bundle lacked matched log-probability posteriors in that summary.
+Table~\ref{tab:fullpanel} reproduces \path{../results/rsa_plots/rsa_scaling_summary.csv} (rounded). Block ``some'' denotes \texttt{exps\_some}; ``num'' denotes \texttt{exps\_numerical}. $n$ is the number of aggregated posterior cells entering means for that row. Log-prob columns are ``---'' when the provider bundle lacked matched log-probability posteriors in that summary.
 
 
 
@@ -527,7 +527,7 @@ Table~\ref{tab:fullpanel} reproduces \path{results/rsa_plots/rsa_scaling_summary
 
   \renewcommand{\arraystretch}{0.92}
 
-  \caption{Per-model mean metrics from \texttt{results/rsa\_plots/rsa\_scaling\_summary.csv} (rounded to three decimals).}
+  \caption{Per-model mean metrics from \texttt{../results/rsa\_plots/rsa\_scaling\_summary.csv} (rounded to three decimals).}
 
   \label{tab:fullpanel}
 
@@ -601,11 +601,11 @@ To keep the main text concise, Section~\ref{Results} reports aggregate figures o
   \centering
   \begin{minipage}[t]{0.48\linewidth}
     \centering
-    \safeincludegraphics[width=\linewidth]{results/rsa_plots/figures/google--gemma-3-4b-it__exps_some.png}
+    \safeincludegraphics[width=\linewidth]{../results/rsa_plots/figures/google--gemma-3-4b-it__exps_some.png}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\linewidth}
     \centering
-    \safeincludegraphics[width=\linewidth]{results/rsa_plots/figures_bar/Qwen--Qwen3.5-9B__exps_some.png}
+    \safeincludegraphics[width=\linewidth]{../results/rsa_plots/figures_bar/Qwen--Qwen3.5-9B__exps_some.png}
   \end{minipage}
   \caption{\footnotesize Representative per-model diagnostics from \texttt{figures/} (left) and \texttt{figures\_bar/} (right).}
   \label{fig:appendix_rep_examples}
@@ -616,7 +616,7 @@ To keep the main text concise, Section~\ref{Results} reports aggregate figures o
   \centering
   \begin{minipage}[t]{0.52\linewidth}
     \centering
-    \safeincludegraphics[width=\linewidth]{results/rsa_plots/figures_with_human_smoke/google--gemma-3-4b-it__exps_some.png}
+    \safeincludegraphics[width=\linewidth]{../results/rsa_plots/figures_with_human_smoke/google--gemma-3-4b-it__exps_some.png}
   \end{minipage}
   \caption{\footnotesize Example from \texttt{figures\_with\_human\_smoke/}, illustrating optional human-reference overlays used for smoke-level checks.}
   \label{fig:appendix_human_smoke_example}
