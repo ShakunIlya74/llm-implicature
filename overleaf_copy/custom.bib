@@ -182,3 +182,48 @@
   year={2023},
   doi={10.1017/pan.2023.2}
 }
+
+@inproceedings{zheng_large_2023,
+	title = {Large {Language} {Models} {Are} {Not} {Robust} {Multiple} {Choice} {Selectors}},
+	url = {https://openreview.net/forum?id=shr9PXz7T0},
+	abstract = {Multiple choice questions (MCQs) serve as a common yet important task format in the evaluation of large language models (LLMs). This work shows that modern LLMs are vulnerable to option position changes in MCQs due to their inherent “selection bias”, namely, they prefer to select specific option IDs as answers (like “Option A”). Through extensive empirical analyses with 20 LLMs on three benchmarks, we pinpoint that this behavioral bias primarily stems from LLMs’ token bias, where the model a priori assigns more probabilistic mass to specific option ID tokens (e.g., A/B/C/D) when predicting answers from the option IDs. To mitigate selection bias, we propose a label-free, inference-time debiasing method, called PriDe, which separates the model’s prior bias for option IDs from the overall prediction distribution. PriDe first estimates the prior by permutating option contents on a small number of test samples, and then applies the estimated prior to debias the remaining samples. We demonstrate that it achieves interpretable and transferable debiasing with high computational efficiency. We hope this work can draw broader research attention to the bias and robustness of modern LLMs.},
+	language = {en},
+	urldate = {2026-03-22},
+	author = {Zheng, Chujie and Zhou, Hao and Meng, Fandong and Zhou, Jie and Huang, Minlie},
+	month = oct,
+	year = {2023},
+
+}
+
+
+@misc{cappelletti_improving_2025,
+	title = {Improving {LLM} {First}-{Token} {Predictions} in {Multiple}-{Choice} {Question} {Answering} via {Prefilling} {Attack}},
+	url = {http://arxiv.org/abs/2505.15323},
+	doi = {10.48550/arXiv.2505.15323},
+	abstract = {Large Language Models (LLMs) are increasingly evaluated on multiple-choice question answering (MCQA) tasks using *first-token probability* (FTP), which selects the answer option whose initial token has the highest likelihood. While efficient, FTP can be fragile: models may assign high probability to unrelated tokens (*misalignment*) or use a valid token merely as part of a generic preamble rather than as a clear answer choice (*misinterpretation*), undermining the reliability of symbolic evaluation. We propose a simple solution: the *prefilling attack*, a structured natural-language prefix (e.g., "*The correct option is:*") prepended to the model output. Originally explored in AI safety, we repurpose prefilling to steer the model to respond with a clean, valid option, without modifying its parameters. Empirically, the FTP with prefilling strategy substantially improves accuracy, calibration, and output consistency across a broad set of LLMs and MCQA benchmarks. It outperforms standard FTP and often matches the performance of open-ended generation approaches that require full decoding and external classifiers, while being significantly more efficient. Our findings suggest that prefilling is a simple, robust, and low-cost method to enhance the reliability of FTP-based evaluation in multiple-choice settings.},
+	urldate = {2026-03-22},
+	publisher = {arXiv},
+	author = {Cappelletti, Silvia and Poppi, Tobia and Poppi, Samuele and Yong, Zheng-Xin and Garcia-Olano, Diego and Cornia, Marcella and Baraldi, Lorenzo and Cucchiara, Rita},
+	month = may,
+	year = {2025},
+	note = {arXiv:2505.15323 [cs]
+version: 1},
+	keywords = {Computer Science - Computation and Language},
+
+}
+
+
+@misc{kauf_log_2024,
+	title = {Log {Probabilities} {Are} a {Reliable} {Estimate} of {Semantic} {Plausibility} in {Base} and {Instruction}-{Tuned} {Language} {Models}},
+	url = {http://arxiv.org/abs/2403.14859},
+	doi = {10.48550/arXiv.2403.14859},
+	abstract = {Semantic plausibility (e.g. knowing that "the actor won the award" is more likely than "the actor won the battle") serves as an effective proxy for general world knowledge. Language models (LMs) capture vast amounts of world knowledge by learning distributional patterns in text, accessible via log probabilities (LogProbs) they assign to plausible vs. implausible outputs. The new generation of instruction-tuned LMs can now also provide explicit estimates of plausibility via prompting. Here, we evaluate the effectiveness of LogProbs and basic prompting to measure semantic plausibility, both in single-sentence minimal pairs (Experiment 1) and short context-dependent scenarios (Experiment 2). We find that (i) in both base and instruction-tuned LMs, LogProbs offers a more reliable measure of semantic plausibility than direct zero-shot prompting, which yields inconsistent and often poor results; (ii) instruction-tuning generally does not alter the sensitivity of LogProbs to semantic plausibility (although sometimes decreases it); (iii) across models, context mostly modulates LogProbs in expected ways, as measured by three novel metrics of context-sensitive plausibility and their match to explicit human plausibility judgments. We conclude that, even in the era of prompt-based evaluations, LogProbs constitute a useful metric of semantic plausibility, both in base and instruction-tuned LMs.},
+	urldate = {2026-03-20},
+	publisher = {arXiv},
+	author = {Kauf, Carina and Chersoni, Emmanuele and Lenci, Alessandro and Fedorenko, Evelina and Ivanova, Anna A.},
+	month = oct,
+	year = {2024},
+	note = {arXiv:2403.14859 [cs]},
+	keywords = {Computer Science - Artificial Intelligence, Computer Science - Computation and Language},
+
+}

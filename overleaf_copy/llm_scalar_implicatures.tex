@@ -17,6 +17,16 @@
 \usepackage{enumitem}
 %\usepackage{placeins}
 
+\newcommand{\safeincludegraphics}[2][]{%
+  \IfFileExists{#2}{%
+    \includegraphics[#1]{#2}%
+  }{%
+    \fbox{\parbox[c][0.22\textheight][c]{0.9\linewidth}{\centering
+      Missing figure file:\\[0.35em]
+      \texttt{\detokenize{#2}}}}%
+  }%
+}
+
 %\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
 %\setlength{\floatsep}{8pt plus 2pt minus 2pt}
 %\setlength{\intextsep}{8pt plus 2pt minus 2pt}
@@ -143,9 +153,64 @@ where $\sigma_r$ is strategy-dependent instruction text, $c_s$ is scenario conte
 
 
 
-\subsection{Inference backend and run records}
+\section{Experiment setup}
+\subsection{Original experiments with human participants}
+In the original study of \citet{goodmanstuhlmuller2013}, participants recruited through Mechanical Turk 
+read short scenarios about three objects that might or might not possess a relevant property, 
+such as letters that could contain checks or seeds that might have sprouted. In each trial, 
+participants first saw a setup sentence describing the objects and the high base rate of the property. 
+They were then asked to judge how many of the three objects had that property by distributing 
+a notional \$100 across the four possible states, from 0 to 3. After this prior judgment, 
+participants were shown the speaker's statement, which specified how many objects the speaker 
+had inspected and then produced either a scalar utterance such as ``Some of the letters have checks 
+inside'' in Experiment~1 or a numeral utterance such as ``1 of the letters has checks inside'' in 
+Experiment~2. Participants then answered the same 0-3 betting question again, this time as a posterior 
+judgment informed by the utterance. Finally, they indicated whether they thought the speaker knew exactly 
+how many of the three objects had the property by distributing a notional \$100 between ``yes'' and ``no.'' 
+Before the main trials, participants completed two unrelated warm-up questions 
+to familiarize themselves with the betting interface, and the web implementation randomized story 
+materials and access conditions across trials.
 
-Given model $m$ and condition $i$, generation produces a response sample $y_{m,i}$. Decoding uses low-temperature sampling with bounded output length and batched parallel execution. Each run is archived with configuration metadata and raw responses for complete provenance.
+To reimplement the original web experiment, we reverse-engineered the setup from the source code of 
+the experimental webpages. 
+
+\subsection{Inference}
+For each model $m$ and condition $i$, where each condition combines a prompting technique, 
+an experimental block, a story, and related metadata, we generated a response sample $y_{m,i}$. 
+Inference was implemented through a unified OpenAI-compatible endpoint layer so that local and 
+remote models could be queried through the same client code and prompt templates. For open-weight 
+checkpoints, we used \texttt{vLLM} local server; for proprietary endpoints, we used the same 
+interface against official public API routers. The evaluated open-weight families covered Qwen3.5 models 
+from 0.8B to 9B parameters, Llama 3.1 and 3.2 Instruct models from 1B to 8B, Gemma~3 instruction-tuned 
+models from 1B to 4B, and Phi-4-mini (approximately 3.8B), complemented by API-only runs with GPT-5.4 mini/nano and Gemini 3.1 Flash Lite/Pro Preview. 
+Unless noted otherwise, all generations used temperature~0, and each run wrote per-story \texttt{.jsonl} 
+outputs together with a \texttt{meta.json} record containing the model identifier, prompting method, 
+experiment name, generation parameters, endpoint, timestamp, and git commit for reproducibility.
+
+\subsection{Prompting techniques}
+To extract belief distributions from the LLMs, we evaluate three prompting methods:
+
+\textbf{Structured output (simulated betting).} This method most closely reproduces the experimental setup 
+of \citet{goodmanstuhlmuller2013}. The model is asked to distribute an imaginary budget of 100 points 
+across the available outcomes, forcing it to externalize an explicit probability distribution.
+
+ \textbf{Simple multiple choice (naive log-prob retrieval).} The model is presented with a standard 
+ multiple-choice prompt, and we extract the next-token log probabilities to measure its implicit confidence
+  over the answer options. \citet{kauf_log_2024}
+
+\textbf{Prefilled multiple choice (controlled log-prob extraction).} The prompt is prefilled with the
+ exact prefix leading up to the answer token, for example \texttt{"The best answer is:"}. This prefilling 
+ procedure enforces syntactic compliance and reduces refusals or verbose continuations, allowing clean 
+ extraction of log probabilities from the forced-choice token. This method is restricted to local vLLM 
+ deployments, because hosted APIs generally do not support prompt prefilling \cite{cappelletti_improving_2025}.
+
+
+For the multiple-choice setups, we also control for output-token bias. Prior work shows that conventional
+ labels such as "A, B, C" can induce non-uniform response preferences unrelated to task 
+ content \cite{zheng_large_2023}. To reduce this effect, we use single-token answer labels whose 
+ semantics are directly tied to the response space. In the scalar-implicature experiments, the answer 
+ options are the numerals 0, 1, 2, and 3; for auxiliary yes/no questions, we use Y and N, respectively.
+
 
 \begin{table}[t]
 
@@ -189,7 +254,7 @@ Given model $m$ and condition $i$, generation produces a response sample $y_{m,i
 
 Responses are parsed into probability vectors. For count questions, we obtain $p\in\Delta(\Omega)$ with $\sum_{s\in\Omega}p(s)=1$; for knowledge questions, we obtain $p\in\Delta(\{\texttt{yes},\texttt{no}\})$. Invalid parses are excluded by schema and normalization checks. Condition-level summaries are computed by averaging valid distributions within identical design keys.
 
-
+\section{RSA analysis}
 
 \subsection{Unified records for RSA probing}
 
@@ -233,7 +298,7 @@ P_{\mathrm{RSA}}(s\mid u,k;\alpha)=
 \mathrm{KL}\!\left(P_{\mathrm{bets}}(\cdot\mid u,k)\,\Vert\,
 P_{\mathrm{RSA}}(\cdot\mid u,k;\alpha)\right),
 \end{equation}
-\normalsize
+\normalsize}
 where $\phi_u$ is the utterance-compatibility function, $\mathcal{U}(u)$ is the relevant alternative set (quantifier or numeral class), $\varepsilon>0$ is a numerical floor, and $\mathcal{A}=\{0.1,0.2,\dots,8.0\}$.
 
 
@@ -263,7 +328,7 @@ plus boundary-hit rates for $\hat\alpha$ at $\min(\mathcal{A})$ and $\max(\mathc
 
 
 
-\subsection{Materials and replication}
+\section{Materials and replication}
 
 \noindent\begingroup
 
@@ -331,7 +396,7 @@ Table~\ref{tab:global} shows clear non-zero divergence between elicited and toke
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{results/exploratory_rsa/01_bets_logprob/summary_plot.png}
+  \safeincludegraphics[width=\textwidth]{results/exploratory_rsa/01_bets_logprob/summary_plot.png}
   \caption{Model-wise agreement between betting and log-probability posteriors for scalar (\texttt{exps\_some}) and numeral (\texttt{exps\_numerical}) blocks. Top row: mean KL; bottom row: mean MAE.}
   \label{fig:bets_logprob_summary}
 \end{figure*}
@@ -363,7 +428,7 @@ RSA fit quality varies by more than two orders of magnitude across model$\times$
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{results/exploratory_rsa/02_alpha_fit/summary_plot.png}
+  \safeincludegraphics[width=\textwidth]{results/exploratory_rsa/02_alpha_fit/summary_plot.png}
   \caption{RSA $\alpha$ diagnostics by experiment block. Top row: fraction of cells at the minimum and maximum grid boundary. Bottom row: mean objective value $\mathrm{KL}(P_{\text{bets}}\Vert P_{\text{RSA}})$ at fitted $\hat\alpha$.}
   \label{fig:alpha_summary}
 \end{figure*}
@@ -394,7 +459,7 @@ Residual norms corroborate this diagnosis: mean $\ell_2$ residuals are minimal f
 
 \begin{figure*}[t]
   \centering
-  \includegraphics[width=\textwidth]{results/rsa_plots/figures_scaling/rsa_scaling_metrics_vs_params.png}
+  \safeincludegraphics[width=\textwidth]{results/rsa_plots/figures_scaling/rsa_scaling_metrics_vs_params.png}
   \caption{Scaling trends of elicitation and RSA metrics versus model size (log-scale x-axis). Colors indicate model families and labels indicate checkpoints.}
   \label{fig:scaling_metrics}
 \end{figure*}
@@ -462,7 +527,7 @@ Table~\ref{tab:fullpanel} reproduces \path{results/rsa_plots/rsa_scaling_summary
 
   \renewcommand{\arraystretch}{0.92}
 
-  \caption{Per-model mean metrics from \path{results/rsa_plots/rsa_scaling_summary.csv} (rounded to three decimals).}
+  \caption{Per-model mean metrics from \texttt{results/rsa\_plots/rsa\_scaling\_summary.csv} (rounded to three decimals).}
 
   \label{tab:fullpanel}
 
@@ -536,11 +601,11 @@ To keep the main text concise, Section~\ref{Results} reports aggregate figures o
   \centering
   \begin{minipage}[t]{0.48\linewidth}
     \centering
-    \includegraphics[width=\linewidth]{results/rsa_plots/figures/google--gemma-3-4b-it__exps_some.png}
+    \safeincludegraphics[width=\linewidth]{results/rsa_plots/figures/google--gemma-3-4b-it__exps_some.png}
   \end{minipage}\hfill
   \begin{minipage}[t]{0.48\linewidth}
     \centering
-    \includegraphics[width=\linewidth]{results/rsa_plots/figures_bar/Qwen--Qwen3.5-9B__exps_some.png}
+    \safeincludegraphics[width=\linewidth]{results/rsa_plots/figures_bar/Qwen--Qwen3.5-9B__exps_some.png}
   \end{minipage}
   \caption{\footnotesize Representative per-model diagnostics from \texttt{figures/} (left) and \texttt{figures\_bar/} (right).}
   \label{fig:appendix_rep_examples}
@@ -551,7 +616,7 @@ To keep the main text concise, Section~\ref{Results} reports aggregate figures o
   \centering
   \begin{minipage}[t]{0.52\linewidth}
     \centering
-    \includegraphics[width=\linewidth]{results/rsa_plots/figures_with_human_smoke/google--gemma-3-4b-it__exps_some.png}
+    \safeincludegraphics[width=\linewidth]{results/rsa_plots/figures_with_human_smoke/google--gemma-3-4b-it__exps_some.png}
   \end{minipage}
   \caption{\footnotesize Example from \texttt{figures\_with\_human\_smoke/}, illustrating optional human-reference overlays used for smoke-level checks.}
   \label{fig:appendix_human_smoke_example}
@@ -560,5 +625,3 @@ To keep the main text concise, Section~\ref{Results} reports aggregate figures o
 \noindent\textbf{Full visual outputs.} All generated figures (all models, blocks, and plot styles) are available in the public repository at \url{https://github.com/ShakunIlya74/llm-implicature}, under \path{results/rsa_plots/}.
 
 \end{document}
-
-
